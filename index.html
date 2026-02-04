@@ -3,59 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Bot</title>
+    <title>Study Bot | Student Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <header class="main-header">
-        <div class="container header-content">
-            <h1 class="logo">
-                <a href="#dashboard">Study Bot 🤖</a>
-            </h1>
-            
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="#dashboard" class="active">Dashboard</a></li>
-                    <li><a href="#todo">To-Do</a></li>
-                    <li><a href="#notes">Notes</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+    <nav class="navbar">
+        <div class="logo">Study Bot 🧠</div>
+        <ul class="nav-links">
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#todo">Tasks</a></li>
+            <li><a href="#notes">Notes</a></li>
+        </ul>
+    </nav>
 
-    <main class="container">
+    <div class="main-content">
         
-        <section id="dashboard" class="card">
-            <h2>📊 Dashboard</h2>
-            <p>Welcome to your study hub. Track your progress here.</p>
-            <div class="placeholder-box">Study Stats Loading...</div>
-        </section>
+        <header class="hero">
+            <h1>Welcome back, Student!</h1>
+            <p>Ready to crush your goals today?</p>
+        </header>
 
-        <section id="todo" class="card">
-            <h2>✅ To-Do List</h2>
-            <p>Manage your tasks and assignments.</p>
-            <ul class="todo-list">
-                <li>Review Math Chapter 4</li>
-                <li>Write History Essay</li>
-                <li>Practice Coding</li>
-            </ul>
-        </section>
+        <div class="grid-container">
+            
+            <section id="dashboard" class="card stats-card">
+                <h2>📊 Your Progress</h2>
+                <div class="progress-container">
+                    <div class="stat-item">
+                        <label>Math Study Goal</label>
+                        <div class="progress-bar"><div class="fill" style="width: 75%;"></div></div>
+                    </div>
+                    <div class="stat-item">
+                        <label>History Reading</label>
+                        <div class="progress-bar"><div class="fill" style="width: 40%;"></div></div>
+                    </div>
+                    <div class="stat-item">
+                        <label>Coding Projects</label>
+                        <div class="progress-bar"><div class="fill" style="width: 90%;"></div></div>
+                    </div>
+                </div>
+            </section>
 
-        <section id="notes" class="card">
-            <h2>📝 Notes</h2>
-            <p>Quickly access your recent study notes.</p>
-            <div class="placeholder-text">
-                <p>Start typing your notes here...</p>
-            </div>
-        </section>
+            <section id="todo" class="card todo-card">
+                <h2>✅ Task Manager</h2>
+                <div class="input-group">
+                    <input type="text" id="todoInput" placeholder="Add a new task...">
+                    <button onclick="addTask()">Add</button>
+                </div>
+                <ul id="todoList">
+                    </ul>
+            </section>
 
-    </main>
+            <section id="notes" class="card notes-card">
+                <h2>📝 Quick Notes</h2>
+                <textarea id="noteArea" placeholder="Type your class notes here... (Auto-saves)"></textarea>
+                <div class="status-msg" id="saveMsg">Notes saved automatically</div>
+            </section>
 
-    <footer>
-        <p>&copy; 2024 Study Bot. Keep learning!</p>
-    </footer>
+        </div>
+    </div>
+
+    <script>
+        // --- TO-DO LIST FUNCTIONALITY ---
+        function addTask() {
+            const input = document.getElementById("todoInput");
+            const list = document.getElementById("todoList");
+            
+            if (input.value === '') {
+                alert("Please write a task first!");
+                return;
+            }
+
+            // Create list item
+            const li = document.createElement("li");
+            li.textContent = input.value;
+
+            // Add delete functionality on click
+            li.onclick = function() {
+                this.classList.toggle('checked');
+                // Optional: Remove after delay
+                // setTimeout(() => this.remove(), 500); 
+            };
+
+            // Add delete button
+            const span = document.createElement("span");
+            span.textContent = "\u00D7"; // X symbol
+            span.className = "close";
+            span.onclick = function(e) {
+                e.stopPropagation(); // Stop clicking the li
+                const div = this.parentElement;
+                div.style.display = "none";
+            }
+
+            li.appendChild(span);
+            list.appendChild(li);
+            input.value = ""; // Clear input
+        }
+
+        // Allow pressing "Enter" to add task
+        document.getElementById("todoInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                addTask();
+            }
+        });
+
+        // --- NOTES AUTO-SAVE FUNCTIONALITY ---
+        const noteArea = document.getElementById("noteArea");
+        const saveMsg = document.getElementById("saveMsg");
+
+        // Load saved notes on startup
+        window.onload = function() {
+            const savedNote = localStorage.getItem("studyBotNotes");
+            if (savedNote) {
+                noteArea.value = savedNote;
+            }
+        };
+
+        // Save to local storage whenever user types
+        noteArea.addEventListener("input", function() {
+            localStorage.setItem("studyBotNotes", noteArea.value);
+            saveMsg.style.opacity = 1;
+            setTimeout(() => { saveMsg.style.opacity = 0; }, 2000);
+        });
+    </script>
 
 </body>
 </html>
