@@ -1,4 +1,121 @@
-:root {
-    --background-color: #ffdfa3;
-    --text-color: #000000;
+/* --- Reset & Base Styles --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #f0f2f5; /* Light grey background */
+    color: #333;
+    line-height: 1.6;
+}
+
+/* --- Layout Utility --- */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- Header & Navigation --- */
+.main-header {
+    background-color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    position: sticky; /* Keeps header at top when scrolling */
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between; /* Pushes logo and nav to edges */
+    align-items: center;
+    height: 70px;
+}
+
+.logo a {
+    text-decoration: none;
+    color: #4f46e5; /* Indigo color */
+    font-weight: 800;
+    font-size: 1.5rem;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 30px; /* Space between links */
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: #4f46e5;
+}
+
+/* --- Main Content Sections --- */
+main {
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.card {
+    background: white;
+    padding: 30px;
+    margin-bottom: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    scroll-margin-top: 90px; /* Prevents header from covering title on scroll */
+}
+
+h2 {
+    color: #1f2937;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #f0f2f5;
+    padding-bottom: 10px;
+}
+
+/* --- Placeholders for "Study" look --- */
+.placeholder-box {
+    background-color: #eef2ff;
+    color: #4f46e5;
+    padding: 40px;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px dashed #c7d2fe;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.todo-list li {
+    list-style-type: none;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+}
+
+.todo-list li::before {
+    content: "◻"; /* Unicode checkbox */
+    margin-right: 10px;
+    color: #9ca3af;
+}
+
+/* --- Footer --- */
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #6b7280;
+    font-size: 0.9rem;
 }

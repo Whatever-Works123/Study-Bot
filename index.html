@@ -1,24 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study Bot</title>
     <link rel="stylesheet" href="styles.css">
-<header>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
 <body>
-	<div>
-		<header>
-			<h1>
-				<a href="#studybot">Study Bot</a>
-			</h1>
-			
-			<ul>
-				<li><a href="#dashboard">DashBoard</a></li>
-				<li></li><a href="#todo">To-Do</a></li>
-				<li><a href="#notes">Notes</a></li>
-			</ul>
-		</header>
-	</div>
+
+    <header class="main-header">
+        <div class="container header-content">
+            <h1 class="logo">
+                <a href="#dashboard">Study Bot 🤖</a>
+            </h1>
+            
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#dashboard" class="active">Dashboard</a></li>
+                    <li><a href="#todo">To-Do</a></li>
+                    <li><a href="#notes">Notes</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <section id="dashboard" class="card">
+            <h2>📊 Dashboard</h2>
+            <p>Welcome to your study hub. Track your progress here.</p>
+            <div class="placeholder-box">Study Stats Loading...</div>
+        </section>
+
+        <section id="todo" class="card">
+            <h2>✅ To-Do List</h2>
+            <p>Manage your tasks and assignments.</p>
+            <ul class="todo-list">
+                <li>Review Math Chapter 4</li>
+                <li>Write History Essay</li>
+                <li>Practice Coding</li>
+            </ul>
+        </section>
+
+        <section id="notes" class="card">
+            <h2>📝 Notes</h2>
+            <p>Quickly access your recent study notes.</p>
+            <div class="placeholder-text">
+                <p>Start typing your notes here...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Study Bot. Keep learning!</p>
+    </footer>
+
 </body>
 </html>
