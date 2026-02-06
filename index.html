@@ -3,307 +3,735 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Bot - Your AI Study Companion</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Study Bot Pro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-color: #f3f4f6;
+            --sidebar-bg: #111827;
+            --card-bg: white;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --timer-bg: #e0e7ff;
+        }
+
+        body.dark-mode {
+            --bg-color: #0f172a;
+            --sidebar-bg: #020617;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --timer-bg: #1e1b4b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            height: 100vh;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar & Mobile Nav --- */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            color: white;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 90;
+        }
+
+        .logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+        }
+
+        .nav-link {
+            padding: 16px 24px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* --- Layout --- */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { margin-bottom: 25px; font-size: 28px; }
+
+        /* --- Components --- */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover { background: var(--primary-hover); }
+        
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        input, select, textarea {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        /* --- Stats --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .stat-number { font-size: 3rem; font-weight: 700; color: var(--primary); }
+
+        /* --- NEW Todo List Styles --- */
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .todo-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: slideIn 0.2s ease;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-top: 4px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .task-content { flex: 1; }
+        
+        .task-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .task-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        
+        .badge-high { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .badge-medium { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+        .badge-low { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); }
+        
+        .date-badge {
+            background: var(--bg-color);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .task-card.completed .task-title { text-decoration: line-through; opacity: 0.6; }
+        .task-card.completed .task-desc { opacity: 0.6; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* --- Notes --- */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .note-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            max-height: 400px;
+            overflow: hidden;
+            position: relative;
+        }
+        .note-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .note-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; }
+        .note-content { white-space: pre-wrap; font-size: 0.95rem; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* --- Pomodoro Timer --- */
+        .timer-container { text-align: center; max-width: 500px; margin: 0 auto; }
+        .timer-display {
+            font-size: 6rem; font-weight: bold; font-variant-numeric: tabular-nums;
+            margin: 20px 0; color: var(--primary); background: var(--timer-bg);
+            border-radius: 20px; padding: 20px;
+        }
+        .timer-controls { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .timer-modes { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .mode-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* --- Modal --- */
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: var(--card-bg); width: 100%; max-width: 500px; padding: 30px;
+            border-radius: 16px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--border-color);
+        }
+
+        /* --- Mobile Responsive --- */
+        @media (max-width: 768px) {
+            .mobile-toggle { display: block; }
+            .sidebar { position: fixed; height: 100%; left: -260px; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+            .sidebar.open { left: 0; }
+            .main-content { padding: 80px 20px 20px; }
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation Sidebar -->
-    <nav class="sidebar">
+
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+    <div class="sidebar" id="sidebar">
         <div class="logo">
             <h2>📚 Study Bot</h2>
         </div>
-        <ul class="nav-links">
-            <li><a href="#home" class="nav-link active" data-page="home">🏠 Home</a></li>
-            <li><a href="#notes" class="nav-link" data-page="notes">📝 Notes</a></li>
-            <li><a href="#chatbot" class="nav-link" data-page="chatbot">🤖 AI Chat</a></li>
-            <li><a href="#todo" class="nav-link" data-page="todo">✅ To-Do List</a></li>
-            <li><a href="#settings" class="nav-link" data-page="settings">⚙️ Settings</a></li>
-            <li><a href="#account" class="nav-link" data-page="account">👤 Account</a></li>
-        </ul>
-    </nav>
+        <nav>
+            <a class="nav-link active" onclick="showPage('home')"><span>🏠</span> Home</a>
+            <a class="nav-link" onclick="showPage('timer')"><span>⏱️</span> Focus Timer</a>
+            <a class="nav-link" onclick="showPage('todo')"><span>✅</span> To-Do List</a>
+            <a class="nav-link" onclick="showPage('notes')"><span>📝</span> Notes</a>
+            <div style="flex: 1"></div>
+            <a class="nav-link" onclick="showPage('settings')"><span>⚙️</span> Settings</a>
+        </nav>
+    </div>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
-        
-        <!-- Home Page -->
-        <section id="home" class="page active">
-            <div class="page-header">
-                <h1>Welcome to Study Bot! 🎓</h1>
-                <p class="subtitle">Your all-in-one AI-powered study companion</p>
-            </div>
-            
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📝</div>
-                    <h3>Organized Notes</h3>
-                    <p>Keep all your class notes in one place, organized by subject and topic.</p>
+    <div class="main-content">
+        <div id="home" class="page active">
+            <h1>Dashboard</h1>
+            <div class="stats-grid">
+                <div class="card">
+                    <div class="stat-number" id="stat-notes">0</div>
+                    <p>Total Notes</p>
                 </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🤖</div>
-                    <h3>AI Assistant</h3>
-                    <p>Get instant help with homework, explanations, and study guidance.</p>
+                <div class="card">
+                    <div class="stat-number" id="stat-todos">0</div>
+                    <p>Pending Tasks</p>
                 </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">✅</div>
-                    <h3>Task Management</h3>
-                    <p>Track assignments, deadlines, and study sessions effortlessly.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Progress Tracking</h3>
-                    <p>Monitor your study habits and stay on top of your goals.</p>
+                <div class="card">
+                    <div class="stat-number" id="stat-pomodoros">0</div>
+                    <p>Focus Sessions</p>
                 </div>
             </div>
             
-            <div class="quick-stats">
-                <div class="stat-box">
-                    <h4>12</h4>
-                    <p>Notes Created</p>
-                </div>
-                <div class="stat-box">
-                    <h4>5</h4>
-                    <p>Tasks Pending</p>
-                </div>
-                <div class="stat-box">
-                    <h4>8</h4>
-                    <p>Study Sessions</p>
-                </div>
+            <h3 style="margin-top: 30px; margin-bottom: 15px;">Upcoming Tasks</h3>
+            <div class="card" id="upcoming-tasks">
+                <p style="color: var(--text-secondary)">No upcoming tasks.</p>
             </div>
-        </section>
+        </div>
 
-        <!-- Notes Page -->
-        <section id="notes" class="page">
-            <div class="page-header">
-                <h1>My Notes 📝</h1>
-                <button class="btn-primary">+ New Note</button>
-            </div>
-            
-            <div class="notes-grid">
-                <div class="note-card">
-                    <div class="note-header">
-                        <h3>Mathematics - Chapter 5</h3>
-                        <span class="note-date">Feb 3, 2026</span>
-                    </div>
-                    <p class="note-preview">Quadratic equations and their applications...</p>
-                    <div class="note-tags">
-                        <span class="tag">Math</span>
-                        <span class="tag">Algebra</span>
-                    </div>
+        <div id="timer" class="page">
+            <h1>Focus Timer 🍅</h1>
+            <div class="card timer-container">
+                <div class="timer-modes">
+                    <button class="btn mode-btn active" onclick="setTimerMode(25)">Focus</button>
+                    <button class="btn mode-btn" onclick="setTimerMode(5)">Short Break</button>
+                    <button class="btn mode-btn" onclick="setTimerMode(15)">Long Break</button>
                 </div>
-                
-                <div class="note-card">
-                    <div class="note-header">
-                        <h3>Biology - Cell Structure</h3>
-                        <span class="note-date">Feb 2, 2026</span>
-                    </div>
-                    <p class="note-preview">Mitochondria, nucleus, and cellular functions...</p>
-                    <div class="note-tags">
-                        <span class="tag">Biology</span>
-                        <span class="tag">Science</span>
-                    </div>
-                </div>
-                
-                <div class="note-card">
-                    <div class="note-header">
-                        <h3>History - World War II</h3>
-                        <span class="note-date">Jan 30, 2026</span>
-                    </div>
-                    <p class="note-preview">Key events, dates, and impacts of WWII...</p>
-                    <div class="note-tags">
-                        <span class="tag">History</span>
-                    </div>
+                <div class="timer-display" id="timer-display">25:00</div>
+                <div class="timer-controls">
+                    <button class="btn" id="start-btn" onclick="startTimer()">Start</button>
+                    <button class="btn" style="background: var(--danger);" onclick="resetTimer()">Reset</button>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- AI Chatbot Page -->
-        <section id="chatbot" class="page">
-            <div class="page-header">
-                <h1>AI Study Assistant 🤖</h1>
+        <div id="todo" class="page">
+            <div class="todo-header">
+                <h1>Tasks ✅</h1>
+                <button class="btn" onclick="openTodoModal()">+ New Task</button>
             </div>
             
-            <div class="chat-container">
-                <div class="chat-messages">
-                    <div class="message bot-message">
-                        <div class="message-avatar">🤖</div>
-                        <div class="message-content">
-                            <p>Hi! I'm your Study Bot assistant. How can I help you study today?</p>
+            <div class="todo-list-container" id="todo-list">
+                </div>
+        </div>
+
+        <div id="notes" class="page">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h1>Notes 📝</h1>
+                <button class="btn" onclick="openNoteModal()">+ New Note</button>
+            </div>
+            <input type="text" id="note-search" placeholder="Search notes..." oninput="renderNotes()" style="margin-bottom: 20px;">
+            <div class="notes-grid" id="notes-grid"></div>
+        </div>
+
+        <div id="settings" class="page">
+            <h1>Settings</h1>
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label>Dark Mode</label>
+                    <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()" style="width: auto; height: 20px; margin: 0;">
+                </div>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border-color);">
+                <button class="btn" style="background: var(--danger);" onclick="clearAllData()">⚠️ Clear All Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="todo-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Add New Task</h2>
+            <label style="font-weight: 500; font-size: 0.9em; color: var(--text-secondary);">Task Title</label>
+            <input type="text" id="modal-todo-text" placeholder="e.g., Finish Math Homework">
+            
+            <label style="font-weight: 500; font-size: 0.9em; color: var(--text-secondary);">Description (Optional)</label>
+            <textarea id="modal-todo-desc" placeholder="Add details..." rows="3"></textarea>
+
+            <div style="display: flex; gap: 15px;">
+                <div style="flex: 1;">
+                    <label style="font-weight: 500; font-size: 0.9em; color: var(--text-secondary);">Due Date</label>
+                    <input type="date" id="modal-todo-date">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-weight: 500; font-size: 0.9em; color: var(--text-secondary);">Priority</label>
+                    <select id="modal-todo-priority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end;">
+                <button class="btn" style="background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color);" onclick="closeTodoModal()">Cancel</button>
+                <button class="btn" onclick="saveTodoFromModal()">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title" style="margin-bottom: 20px;">Edit Note</h2>
+            <input type="text" id="note-title" placeholder="Title">
+            <textarea id="note-content" placeholder="Type your notes here..." rows="8"></textarea>
+            <input type="text" id="note-tags" placeholder="Tags (e.g., math, history)">
+            
+            <label style="display: block; margin-top: 10px; font-weight: 500;">Attach Image (Max 1MB)</label>
+            <input type="file" id="note-image" accept="image/*">
+            <div id="image-preview" style="margin-top: 10px;"></div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+                <button class="btn" style="background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color);" onclick="closeNoteModal()">Cancel</button>
+                <button class="btn" onclick="saveNote()">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        let notes = JSON.parse(localStorage.getItem('notes')) || [];
+        let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
+        let editingNoteId = null;
+
+        function saveData() {
+            try {
+                localStorage.setItem('todos', JSON.stringify(todos));
+                localStorage.setItem('notes', JSON.stringify(notes));
+                localStorage.setItem('pomodoros', pomodoros);
+                updateStats();
+            } catch (e) {
+                alert("Storage full! Please delete some notes or images.");
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
+        }
+
+        // --- Stats ---
+        function updateStats() {
+            document.getElementById('stat-notes').textContent = notes.length;
+            document.getElementById('stat-todos').textContent = todos.filter(t => !t.completed).length;
+            document.getElementById('stat-pomodoros').textContent = pomodoros;
+
+            const upcoming = todos.filter(t => !t.completed && t.dueDate).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 3);
+            const container = document.getElementById('upcoming-tasks');
+            
+            if(upcoming.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary)">No upcoming tasks with due dates.</p>';
+            } else {
+                container.innerHTML = upcoming.map(t => `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                        <span>${t.text}</span>
+                        <span style="color: var(--primary); font-size: 0.9em;">${t.dueDate}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // --- Timer Logic ---
+        let timerInterval;
+        let timeLeft = 25 * 60;
+        let isTimerRunning = false;
+
+        function setTimerMode(minutes) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timeLeft = minutes * 60;
+            updateTimerDisplay();
+            document.getElementById('start-btn').textContent = "Start";
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${m}:${s}`;
+            document.title = `${m}:${s} - Study Bot`;
+        }
+
+        function startTimer() {
+            const btn = document.getElementById('start-btn');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                btn.textContent = "Resume";
+            } else {
+                isTimerRunning = true;
+                btn.textContent = "Pause";
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        btn.textContent = "Start";
+                        alert("Time's up!");
+                        pomodoros++;
+                        saveData();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            document.getElementById('start-btn').textContent = "Start";
+            const activeMode = document.querySelector('.mode-btn.active').textContent;
+            if (activeMode.includes('Short')) timeLeft = 5 * 60;
+            else if (activeMode.includes('Long')) timeLeft = 15 * 60;
+            else timeLeft = 25 * 60;
+            updateTimerDisplay();
+        }
+
+        // --- NEW TO-DO LOGIC ---
+        function openTodoModal() {
+            document.getElementById('modal-todo-text').value = '';
+            document.getElementById('modal-todo-desc').value = '';
+            document.getElementById('modal-todo-date').value = '';
+            document.getElementById('modal-todo-priority').value = 'medium';
+            document.getElementById('todo-modal').classList.add('show');
+        }
+
+        function closeTodoModal() {
+            document.getElementById('todo-modal').classList.remove('show');
+        }
+
+        function saveTodoFromModal() {
+            const text = document.getElementById('modal-todo-text').value.trim();
+            const desc = document.getElementById('modal-todo-desc').value.trim();
+            const date = document.getElementById('modal-todo-date').value;
+            const priority = document.getElementById('modal-todo-priority').value;
+
+            if (!text) return alert("Task title is required");
+
+            todos.push({
+                id: Date.now(),
+                text,
+                desc, // Now storing description
+                dueDate: date,
+                priority,
+                completed: false
+            });
+
+            saveData();
+            closeTodoModal();
+            renderTodos();
+        }
+
+        function renderTodos() {
+            const list = document.getElementById('todo-list');
+            const sortedTodos = [...todos].sort((a, b) => {
+                if (a.completed !== b.completed) return a.completed - b.completed;
+                if (a.priority === 'high' && b.priority !== 'high') return -1; // High priority first
+                if (b.priority === 'high' && a.priority !== 'high') return 1;
+                return 0;
+            });
+
+            list.innerHTML = sortedTodos.map(todo => `
+                <div class="task-card ${todo.completed ? 'completed' : ''}">
+                    <input type="checkbox" class="task-checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo(${todo.id})">
+                    <div class="task-content">
+                        <div class="task-title">${todo.text}</div>
+                        ${todo.desc ? `<div class="task-desc">${todo.desc}</div>` : ''}
+                        
+                        <div class="task-meta">
+                            <span class="badge badge-${todo.priority}">${todo.priority}</span>
+                            ${todo.dueDate ? `<span class="date-badge">📅 ${formatDate(todo.dueDate)}</span>` : ''}
                         </div>
                     </div>
-                    
-                    <div class="message user-message">
-                        <div class="message-content">
-                            <p>Can you explain photosynthesis?</p>
-                        </div>
-                        <div class="message-avatar">👤</div>
-                    </div>
-                    
-                    <div class="message bot-message">
-                        <div class="message-avatar">🤖</div>
-                        <div class="message-content">
-                            <p>Of course! Photosynthesis is the process plants use to convert sunlight into energy...</p>
-                        </div>
-                    </div>
+                    <button class="btn" style="background: transparent; color: var(--text-secondary); padding: 5px;" onclick="deleteTodo(${todo.id})">🗑️</button>
                 </div>
-                
-                <div class="chat-input-area">
-                    <input type="text" class="chat-input" placeholder="Ask me anything about your studies...">
-                    <button class="btn-send">Send</button>
-                </div>
-            </div>
-        </section>
+            `).join('') || '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">No tasks yet! Click "New Task" to begin.</div>';
+        }
 
-        <!-- To-Do List Page -->
-        <section id="todo" class="page">
-            <div class="page-header">
-                <h1>To-Do List ✅</h1>
-                <button class="btn-primary">+ Add Task</button>
-            </div>
+        function formatDate(dateString) {
+            const options = { month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function toggleTodo(id) {
+            const t = todos.find(x => x.id === id);
+            if (t) t.completed = !t.completed;
+            saveData();
+            renderTodos();
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(t => t.id !== id);
+            saveData();
+            renderTodos();
+        }
+
+        // --- Notes Logic ---
+        function openNoteModal(id = null) {
+            editingNoteId = id;
+            document.getElementById('note-modal').classList.add('show');
             
-            <div class="todo-container">
-                <div class="todo-section">
-                    <h3>Today</h3>
-                    <div class="todo-item">
-                        <input type="checkbox" id="task1">
-                        <label for="task1">Complete Math homework - Chapter 5 problems</label>
-                        <span class="todo-priority high">High</span>
-                    </div>
-                    <div class="todo-item">
-                        <input type="checkbox" id="task2">
-                        <label for="task2">Study for Biology quiz</label>
-                        <span class="todo-priority medium">Medium</span>
-                    </div>
-                </div>
-                
-                <div class="todo-section">
-                    <h3>This Week</h3>
-                    <div class="todo-item">
-                        <input type="checkbox" id="task3">
-                        <label for="task3">Finish History essay draft</label>
-                        <span class="todo-priority high">High</span>
-                    </div>
-                    <div class="todo-item">
-                        <input type="checkbox" id="task4">
-                        <label for="task4">Review Chemistry notes</label>
-                        <span class="todo-priority low">Low</span>
-                    </div>
-                    <div class="todo-item completed">
-                        <input type="checkbox" id="task5" checked>
-                        <label for="task5">Submit English assignment</label>
-                        <span class="todo-priority medium">Medium</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+            if (id) {
+                const note = notes.find(n => n.id === id);
+                document.getElementById('note-title').value = note.title;
+                document.getElementById('note-content').value = note.content;
+                document.getElementById('note-tags').value = note.tags.join(', ');
+                document.getElementById('image-preview').innerHTML = note.image ? `<img src="${note.image}">` : '';
+            } else {
+                document.getElementById('note-title').value = '';
+                document.getElementById('note-content').value = '';
+                document.getElementById('note-tags').value = '';
+                document.getElementById('note-image').value = '';
+                document.getElementById('image-preview').innerHTML = '';
+            }
+        }
 
-        <!-- Settings Page -->
-        <section id="settings" class="page">
-            <div class="page-header">
-                <h1>Settings ⚙️</h1>
-            </div>
-            
-            <div class="settings-container">
-                <div class="settings-section">
-                    <h3>Appearance</h3>
-                    <div class="setting-item">
-                        <label>Theme</label>
-                        <select class="setting-select">
-                            <option>Light Mode</option>
-                            <option>Dark Mode</option>
-                            <option>Auto</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label>Font Size</label>
-                        <select class="setting-select">
-                            <option>Small</option>
-                            <option selected>Medium</option>
-                            <option>Large</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3>Notifications</h3>
-                    <div class="setting-item">
-                        <label>Assignment Reminders</label>
-                        <label class="toggle">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label>Study Session Alerts</label>
-                        <label class="toggle">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3>Study Preferences</h3>
-                    <div class="setting-item">
-                        <label>Default Study Duration</label>
-                        <select class="setting-select">
-                            <option>25 minutes</option>
-                            <option selected>45 minutes</option>
-                            <option>60 minutes</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </section>
+        function closeNoteModal() {
+            document.getElementById('note-modal').classList.remove('show');
+        }
 
-        <!-- Account Page -->
-        <section id="account" class="page">
-            <div class="page-header">
-                <h1>Account 👤</h1>
-            </div>
-            
-            <div class="account-container">
-                <div class="profile-section">
-                    <div class="profile-avatar">👤</div>
-                    <h2>John Student</h2>
-                    <p class="profile-email">john.student@email.com</p>
-                    <button class="btn-secondary">Edit Profile</button>
-                </div>
-                
-                <div class="account-info">
-                    <div class="info-section">
-                        <h3>Account Details</h3>
-                        <div class="info-item">
-                            <span class="info-label">Member Since:</span>
-                            <span class="info-value">January 2026</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Plan:</span>
-                            <span class="info-value">Free</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Storage Used:</span>
-                            <span class="info-value">145 MB / 1 GB</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-section">
-                        <h3>Security</h3>
-                        <button class="btn-secondary">Change Password</button>
-                        <button class="btn-secondary">Enable 2FA</button>
-                    </div>
-                    
-                    <div class="info-section">
-                        <button class="btn-danger">Log Out</button>
-                    </div>
-                </div>
-            </div>
-        </section>
+        function saveNote() {
+            const title = document.getElementById('note-title').value;
+            const content = document.getElementById('note-content').value;
+            const tags = document.getElementById('note-tags').value.split(',').map(t => t.trim()).filter(t => t);
+            const file = document.getElementById('note-image').files[0];
 
-    </main>
+            if (!title) return alert("Title required");
 
-    <script src="script.js"></script>
+            const saveProcess = (imgData) => {
+                if (editingNoteId) {
+                    const idx = notes.findIndex(n => n.id === editingNoteId);
+                    notes[idx] = { ...notes[idx], title, content, tags, image: imgData || notes[idx].image };
+                } else {
+                    notes.unshift({ id: Date.now(), title, content, tags, image: imgData, date: new Date().toLocaleDateString() });
+                }
+                saveData();
+                closeNoteModal();
+                renderNotes();
+            };
+
+            if (file) {
+                if (file.size > 1000000) return alert("Image too large (Max 1MB)");
+                const reader = new FileReader();
+                reader.onload = e => saveProcess(e.target.result);
+                reader.readAsDataURL(file);
+            } else {
+                saveProcess(null);
+            }
+        }
+
+        function renderNotes() {
+            const search = document.getElementById('note-search').value.toLowerCase();
+            const grid = document.getElementById('notes-grid');
+            const filtered = notes.filter(n => n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search) || n.tags.some(t => t.toLowerCase().includes(search)));
+            grid.innerHTML = filtered.map(note => `
+                <div class="note-card" onclick="openNoteModal(${note.id})">
+                    ${note.image ? `<img src="${note.image}">` : ''}
+                    <h3>${note.title}</h3>
+                    <div class="note-content">${note.content}</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: var(--primary);">
+                        ${note.tags.map(t => `#${t}`).join(' ')}
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteNote(${note.id})" style="position: absolute; top: 10px; right: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 4px 8px; cursor: pointer;">🗑️</button>
+                </div>
+            `).join('') || '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary)">No notes found.</div>';
+        }
+
+        function deleteNote(id) {
+            if(confirm('Delete note?')) {
+                notes = notes.filter(n => n.id !== id);
+                saveData();
+                renderNotes();
+            }
+        }
+
+        // --- Settings & Init ---
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        function clearAllData() {
+            if(confirm("Delete EVERYTHING? This cannot be undone.")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('dark-mode-toggle').checked = true;
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('note-modal')) closeNoteModal();
+            if (event.target == document.getElementById('todo-modal')) closeTodoModal();
+        }
+
+        renderTodos();
+        renderNotes();
+        updateStats();
+    </script>
 </body>
 </html>
