@@ -3,130 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Bot | Student Dashboard</title>
+    <title>Study Bot - Your AI Study Companion</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <nav class="navbar">
-        <div class="logo">Study Bot 🧠</div>
+    <!-- Navigation Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <h2>📚 Study Bot</h2>
+        </div>
         <ul class="nav-links">
-            <li><a href="#dashboard">Dashboard</a></li>
-            <li><a href="#todo">Tasks</a></li>
-            <li><a href="#notes">Notes</a></li>
+            <li><a href="#home" class="nav-link active" data-page="home">🏠 Home</a></li>
+            <li><a href="#notes" class="nav-link" data-page="notes">📝 Notes</a></li>
+            <li><a href="#chatbot" class="nav-link" data-page="chatbot">🤖 AI Chat</a></li>
+            <li><a href="#todo" class="nav-link" data-page="todo">✅ To-Do List</a></li>
+            <li><a href="#settings" class="nav-link" data-page="settings">⚙️ Settings</a></li>
+            <li><a href="#account" class="nav-link" data-page="account">👤 Account</a></li>
         </ul>
     </nav>
 
-    <div class="main-content">
+    <!-- Main Content Area -->
+    <main class="main-content">
         
-        <header class="hero">
-            <h1>Welcome back, Student!</h1>
-            <p>Ready to crush your goals today?</p>
-        </header>
-
-        <div class="grid-container">
+        <!-- Home Page -->
+        <section id="home" class="page active">
+            <div class="page-header">
+                <h1>Welcome to Study Bot! 🎓</h1>
+                <p class="subtitle">Your all-in-one AI-powered study companion</p>
+            </div>
             
-            <section id="dashboard" class="card stats-card">
-                <h2>📊 Your Progress</h2>
-                <div class="progress-container">
-                    <div class="stat-item">
-                        <label>Math Study Goal</label>
-                        <div class="progress-bar"><div class="fill" style="width: 75%;"></div></div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Organized Notes</h3>
+                    <p>Keep all your class notes in one place, organized by subject and topic.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Assistant</h3>
+                    <p>Get instant help with homework, explanations, and study guidance.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">✅</div>
+                    <h3>Task Management</h3>
+                    <p>Track assignments, deadlines, and study sessions effortlessly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Progress Tracking</h3>
+                    <p>Monitor your study habits and stay on top of your goals.</p>
+                </div>
+            </div>
+            
+            <div class="quick-stats">
+                <div class="stat-box">
+                    <h4>12</h4>
+                    <p>Notes Created</p>
+                </div>
+                <div class="stat-box">
+                    <h4>5</h4>
+                    <p>Tasks Pending</p>
+                </div>
+                <div class="stat-box">
+                    <h4>8</h4>
+                    <p>Study Sessions</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Notes Page -->
+        <section id="notes" class="page">
+            <div class="page-header">
+                <h1>My Notes 📝</h1>
+                <button class="btn-primary">+ New Note</button>
+            </div>
+            
+            <div class="notes-grid">
+                <div class="note-card">
+                    <div class="note-header">
+                        <h3>Mathematics - Chapter 5</h3>
+                        <span class="note-date">Feb 3, 2026</span>
                     </div>
-                    <div class="stat-item">
-                        <label>History Reading</label>
-                        <div class="progress-bar"><div class="fill" style="width: 40%;"></div></div>
-                    </div>
-                    <div class="stat-item">
-                        <label>Coding Projects</label>
-                        <div class="progress-bar"><div class="fill" style="width: 90%;"></div></div>
+                    <p class="note-preview">Quadratic equations and their applications...</p>
+                    <div class="note-tags">
+                        <span class="tag">Math</span>
+                        <span class="tag">Algebra</span>
                     </div>
                 </div>
-            </section>
-
-            <section id="todo" class="card todo-card">
-                <h2>✅ Task Manager</h2>
-                <div class="input-group">
-                    <input type="text" id="todoInput" placeholder="Add a new task...">
-                    <button onclick="addTask()">Add</button>
+                
+                <div class="note-card">
+                    <div class="note-header">
+                        <h3>Biology - Cell Structure</h3>
+                        <span class="note-date">Feb 2, 2026</span>
+                    </div>
+                    <p class="note-preview">Mitochondria, nucleus, and cellular functions...</p>
+                    <div class="note-tags">
+                        <span class="tag">Biology</span>
+                        <span class="tag">Science</span>
+                    </div>
                 </div>
-                <ul id="todoList">
-                    </ul>
-            </section>
+                
+                <div class="note-card">
+                    <div class="note-header">
+                        <h3>History - World War II</h3>
+                        <span class="note-date">Jan 30, 2026</span>
+                    </div>
+                    <p class="note-preview">Key events, dates, and impacts of WWII...</p>
+                    <div class="note-tags">
+                        <span class="tag">History</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            <section id="notes" class="card notes-card">
-                <h2>📝 Quick Notes</h2>
-                <textarea id="noteArea" placeholder="Type your class notes here... (Auto-saves)"></textarea>
-                <div class="status-msg" id="saveMsg">Notes saved automatically</div>
-            </section>
-
-        </div>
-    </div>
-
-    <script>
-        // --- TO-DO LIST FUNCTIONALITY ---
-        function addTask() {
-            const input = document.getElementById("todoInput");
-            const list = document.getElementById("todoList");
+        <!-- AI Chatbot Page -->
+        <section id="chatbot" class="page">
+            <div class="page-header">
+                <h1>AI Study Assistant 🤖</h1>
+            </div>
             
-            if (input.value === '') {
-                alert("Please write a task first!");
-                return;
-            }
+            <div class="chat-container">
+                <div class="chat-messages">
+                    <div class="message bot-message">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <p>Hi! I'm your Study Bot assistant. How can I help you study today?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="message user-message">
+                        <div class="message-content">
+                            <p>Can you explain photosynthesis?</p>
+                        </div>
+                        <div class="message-avatar">👤</div>
+                    </div>
+                    
+                    <div class="message bot-message">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <p>Of course! Photosynthesis is the process plants use to convert sunlight into energy...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" placeholder="Ask me anything about your studies...">
+                    <button class="btn-send">Send</button>
+                </div>
+            </div>
+        </section>
 
-            // Create list item
-            const li = document.createElement("li");
-            li.textContent = input.value;
+        <!-- To-Do List Page -->
+        <section id="todo" class="page">
+            <div class="page-header">
+                <h1>To-Do List ✅</h1>
+                <button class="btn-primary">+ Add Task</button>
+            </div>
+            
+            <div class="todo-container">
+                <div class="todo-section">
+                    <h3>Today</h3>
+                    <div class="todo-item">
+                        <input type="checkbox" id="task1">
+                        <label for="task1">Complete Math homework - Chapter 5 problems</label>
+                        <span class="todo-priority high">High</span>
+                    </div>
+                    <div class="todo-item">
+                        <input type="checkbox" id="task2">
+                        <label for="task2">Study for Biology quiz</label>
+                        <span class="todo-priority medium">Medium</span>
+                    </div>
+                </div>
+                
+                <div class="todo-section">
+                    <h3>This Week</h3>
+                    <div class="todo-item">
+                        <input type="checkbox" id="task3">
+                        <label for="task3">Finish History essay draft</label>
+                        <span class="todo-priority high">High</span>
+                    </div>
+                    <div class="todo-item">
+                        <input type="checkbox" id="task4">
+                        <label for="task4">Review Chemistry notes</label>
+                        <span class="todo-priority low">Low</span>
+                    </div>
+                    <div class="todo-item completed">
+                        <input type="checkbox" id="task5" checked>
+                        <label for="task5">Submit English assignment</label>
+                        <span class="todo-priority medium">Medium</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            // Add delete functionality on click
-            li.onclick = function() {
-                this.classList.toggle('checked');
-                // Optional: Remove after delay
-                // setTimeout(() => this.remove(), 500); 
-            };
+        <!-- Settings Page -->
+        <section id="settings" class="page">
+            <div class="page-header">
+                <h1>Settings ⚙️</h1>
+            </div>
+            
+            <div class="settings-container">
+                <div class="settings-section">
+                    <h3>Appearance</h3>
+                    <div class="setting-item">
+                        <label>Theme</label>
+                        <select class="setting-select">
+                            <option>Light Mode</option>
+                            <option>Dark Mode</option>
+                            <option>Auto</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Font Size</label>
+                        <select class="setting-select">
+                            <option>Small</option>
+                            <option selected>Medium</option>
+                            <option>Large</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Notifications</h3>
+                    <div class="setting-item">
+                        <label>Assignment Reminders</label>
+                        <label class="toggle">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>Study Session Alerts</label>
+                        <label class="toggle">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Study Preferences</h3>
+                    <div class="setting-item">
+                        <label>Default Study Duration</label>
+                        <select class="setting-select">
+                            <option>25 minutes</option>
+                            <option selected>45 minutes</option>
+                            <option>60 minutes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            // Add delete button
-            const span = document.createElement("span");
-            span.textContent = "\u00D7"; // X symbol
-            span.className = "close";
-            span.onclick = function(e) {
-                e.stopPropagation(); // Stop clicking the li
-                const div = this.parentElement;
-                div.style.display = "none";
-            }
+        <!-- Account Page -->
+        <section id="account" class="page">
+            <div class="page-header">
+                <h1>Account 👤</h1>
+            </div>
+            
+            <div class="account-container">
+                <div class="profile-section">
+                    <div class="profile-avatar">👤</div>
+                    <h2>John Student</h2>
+                    <p class="profile-email">john.student@email.com</p>
+                    <button class="btn-secondary">Edit Profile</button>
+                </div>
+                
+                <div class="account-info">
+                    <div class="info-section">
+                        <h3>Account Details</h3>
+                        <div class="info-item">
+                            <span class="info-label">Member Since:</span>
+                            <span class="info-value">January 2026</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Plan:</span>
+                            <span class="info-value">Free</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Storage Used:</span>
+                            <span class="info-value">145 MB / 1 GB</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>Security</h3>
+                        <button class="btn-secondary">Change Password</button>
+                        <button class="btn-secondary">Enable 2FA</button>
+                    </div>
+                    
+                    <div class="info-section">
+                        <button class="btn-danger">Log Out</button>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            li.appendChild(span);
-            list.appendChild(li);
-            input.value = ""; // Clear input
-        }
+    </main>
 
-        // Allow pressing "Enter" to add task
-        document.getElementById("todoInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                addTask();
-            }
-        });
-
-        // --- NOTES AUTO-SAVE FUNCTIONALITY ---
-        const noteArea = document.getElementById("noteArea");
-        const saveMsg = document.getElementById("saveMsg");
-
-        // Load saved notes on startup
-        window.onload = function() {
-            const savedNote = localStorage.getItem("studyBotNotes");
-            if (savedNote) {
-                noteArea.value = savedNote;
-            }
-        };
-
-        // Save to local storage whenever user types
-        noteArea.addEventListener("input", function() {
-            localStorage.setItem("studyBotNotes", noteArea.value);
-            saveMsg.style.opacity = 1;
-            setTimeout(() => { saveMsg.style.opacity = 0; }, 2000);
-        });
-    </script>
-
+    <script src="script.js"></script>
 </body>
 </html>
