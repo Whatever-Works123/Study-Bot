@@ -106,72 +106,74 @@
         </div>
     </div>
 
-    <div id="todo-modal" class="modal">
-        <div class="modal-content fade-in-up">
+    <div id="todo-modal" class="modal-overlay">
+        <div class="modal-glass">
             <div class="modal-header">
-                <h2>New Task</h2>
-                <button class="close-btn" onclick="closeTodoModal()">&times;</button>
+                <div>
+                    <h2>New Task</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">What's on your mind?</p>
+                </div>
+                <button class="close-icon" onclick="closeTodoModal()">✕</button>
             </div>
             
-            <div class="form-group">
-                <label>Task Name</label>
-                <input type="text" id="modal-todo-text" placeholder="What needs to be done?">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Due Date</label>
-                    <input type="date" id="modal-todo-date">
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>TASK NAME</label>
+                    <input type="text" id="modal-todo-text" placeholder="e.g. Finish Math Homework" class="glass-input big-input">
                 </div>
-                <div class="form-group">
-                    <label>Priority level</label>
-                    <div class="select-wrapper">
-                        <select id="modal-todo-priority">
-                            <option value="low">🟢 Low Priority</option>
-                            <option value="medium" selected>🟡 Medium Priority</option>
-                            <option value="high">🔴 High Priority</option>
+
+                <div class="row-group">
+                    <div class="input-group">
+                        <label>DUE DATE</label>
+                        <input type="date" id="modal-todo-date" class="glass-input">
+                    </div>
+                    <div class="input-group">
+                        <label>PRIORITY</label>
+                        <select id="modal-todo-priority" class="glass-input">
+                            <option value="low">🟢 Low</option>
+                            <option value="medium" selected>🟡 Medium</option>
+                            <option value="high">🔴 High</option>
                         </select>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Description (Optional)</label>
-                <textarea id="modal-todo-desc" placeholder="Add details, links, or sub-tasks..." rows="3"></textarea>
+                <div class="input-group">
+                    <label>DETAILS</label>
+                    <textarea id="modal-todo-desc" placeholder="Add specific sub-tasks or links..." rows="3" class="glass-input"></textarea>
+                </div>
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-text" onclick="closeTodoModal()">Cancel</button>
-                <button class="btn" onclick="saveTodoFromModal()">Save Task</button>
+                <button class="btn-ghost" onclick="closeTodoModal()">Cancel</button>
+                <button class="btn-primary-wide" onclick="saveTodoFromModal()">Create Task</button>
             </div>
         </div>
     </div>
 
-    <div id="note-modal" class="modal">
-        <div class="modal-content fade-in-up modal-lg">
-            <div class="modal-header">
-                <input type="text" id="note-title" placeholder="Untitled Note" class="invisible-input title-input">
-                <button class="close-btn" onclick="closeNoteModal()">&times;</button>
+    <div id="note-modal" class="modal-overlay">
+        <div class="modal-glass modal-large">
+            <div class="modal-header no-border">
+                <input type="text" id="note-title" placeholder="Untitled Note" class="invisible-title">
+                <button class="close-icon" onclick="closeNoteModal()">✕</button>
             </div>
             
-            <div class="note-editor-area">
-                <textarea id="note-content" placeholder="Type your thoughts here..." class="invisible-input body-input"></textarea>
-            </div>
-
-            <div class="image-upload-area">
-                <label for="note-image" class="upload-label">
-                    <span>📷 Attach Image</span>
-                    <input type="file" id="note-image" accept="image/*" hidden onchange="previewImage(this)">
-                </label>
-                <div id="image-preview-container" class="hidden">
-                    <img id="image-preview" src="" alt="Preview">
-                    <button onclick="clearImage()" class="remove-image-btn">✕</button>
+            <div class="modal-body scrollable">
+                <textarea id="note-content" placeholder="Start typing your brilliance here..." class="invisible-body"></textarea>
+                
+                <div id="image-preview-container" class="image-preview-box hidden">
+                    <img id="image-preview" src="">
+                    <button onclick="clearImage()" class="remove-img">✕</button>
                 </div>
             </div>
 
-            <div class="modal-footer" style="justify-content: space-between;">
-                <input type="text" id="note-tags" placeholder="🏷️ Tags (comma separated)" style="width: 60%; margin: 0;">
-                <button class="btn" onclick="saveNote()">Save Note</button>
+            <div class="modal-footer toolbar">
+                <div class="tools-left">
+                     <label for="note-image" class="tool-btn" title="Add Image">
+                        📷 <input type="file" id="note-image" accept="image/*" hidden onchange="previewImage(this)">
+                    </label>
+                    <input type="text" id="note-tags" placeholder="#tag1, #tag2" class="tag-input">
+                </div>
+                <button class="btn-primary-wide" onclick="saveNote()">Save</button>
             </div>
         </div>
     </div>
