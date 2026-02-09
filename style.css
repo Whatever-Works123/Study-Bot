@@ -188,13 +188,29 @@ body.dark-mode .task-card:hover { background: #2d3748; }
 /* Glass Inputs */
 .input-group { margin-bottom: 20px; }
 .input-group label {
-    display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);
-    margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;
+    display: block; 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    color: var(--text-secondary);
+    margin-bottom: 8px; 
+    letter-spacing: 1px; 
+    text-transform: uppercase;
 }
+/* This controls the bubble look */
 .glass-input {
-    background: var(--input-bg); padding: 14px; border-radius: 12px;
-    font-size: 1rem; color: var(--text-primary);
-    border: 2px solid transparent; transition: 0.2s;
+    background: var(--input-bg); 
+    padding: 14px; 
+    border-radius: 12px;
+    font-size: 1rem; 
+    color: var(--text-primary);
+    border: 2px solid transparent; 
+    transition: 0.2s;
+}
+
+/* This specific class makes the Task Name font bigger */
+.big-input { 
+    font-size: 1.2rem; 
+    font-weight: 600; 
 }
 .glass-input:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
 .big-input { font-size: 1.2rem; font-weight: 600; }
