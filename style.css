@@ -1,7 +1,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --bg-gradient: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%); /* Fresher Gradient */
+    --bg-gradient: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
     --sidebar-bg: rgba(255, 255, 255, 0.7);
     --glass-border: 1px solid rgba(255, 255, 255, 0.6);
     --text-primary: #2d3748;
@@ -38,6 +38,16 @@ body {
     overflow: hidden;
 }
 
+/* --- ANIMATIONS --- */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes springOpen { 
+    0% { opacity: 0; transform: scale(0.8); } 
+    70% { opacity: 1; transform: scale(1.02); } 
+    100% { opacity: 1; transform: scale(1); } 
+}
+
+.fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+
 /* --- SIDEBAR --- */
 .sidebar {
     width: 280px;
@@ -46,8 +56,7 @@ body {
     border-right: var(--glass-border);
     padding: 30px 20px;
     display: flex; flex-direction: column;
-    z-index: 50;
-    transition: all 0.3s ease;
+    z-index: 50; transition: all 0.3s ease;
 }
 .logo h2 {
     font-size: 1.6rem; margin-bottom: 40px; padding-left: 10px;
@@ -81,15 +90,11 @@ h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 30px; }
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: 0.3s;
 }
 .btn:hover { transform: scale(1.05); }
-
 .btn-outline {
     background: transparent; border: 2px solid var(--text-secondary);
     color: var(--text-secondary); padding: 10px 24px; border-radius: 50px; cursor: pointer;
 }
-
-input, select, textarea {
-    font-family: inherit; width: 100%; border: none; outline: none;
-}
+input, select, textarea { font-family: inherit; width: 100%; border: none; outline: none; }
 
 /* --- STATS & LISTS --- */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px; margin-bottom: 50px; }
@@ -121,150 +126,117 @@ body.dark-mode .task-card:hover { background: #2d3748; }
 .mode-btn.active { background: rgba(102, 126, 234, 0.1); color: var(--primary); border-radius: 20px; }
 
 /* =========================================
-   === NEW MODAL STYLES (THE BIG CHANGE) ===
+   === DRAGGABLE WINDOW STYLES ===
    ========================================= */
 
 .modal-overlay {
-    display: none; /* Hidden by default */
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.3); /* Dark overlay */
-    backdrop-filter: blur(8px); /* Blur the background */
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.25); /* Lighter overlay for window feel */
+    backdrop-filter: blur(4px);
     z-index: 1000;
     justify-content: center; align-items: center;
     opacity: 0; transition: opacity 0.3s ease;
 }
-
-.modal-overlay.show {
-    display: flex; opacity: 1;
-}
+.modal-overlay.show { display: flex; opacity: 1; }
 
 .modal-glass {
     background: var(--modal-bg);
-    width: 90%; max-width: 550px;
-    border-radius: 28px;
-    padding: 0; /* Padding handled by children */
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 550px; max-width: 95%;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.5);
     display: flex; flex-direction: column;
     max-height: 85vh;
+    position: relative; /* Important for dragging context */
+    transform-origin: center;
 }
 
-.modal-overlay.show .modal-glass { transform: scale(1); }
+/* The Spring Animation */
+.modal-overlay.show .modal-glass {
+    animation: springOpen 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
 
-/* Modal Header */
+/* Header Handling */
 .modal-header {
-    padding: 30px 30px 20px;
+    padding: 20px 30px;
     display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    background: rgba(255,255,255,0.01);
 }
-.modal-header h2 { margin: 0; font-size: 1.8rem; color: var(--text-primary); }
+
+/* This class enables the grab cursor */
+.draggable-handle {
+    cursor: grab;
+    user-select: none; /* Prevents highlighting text while dragging */
+}
+.draggable-handle:active {
+    cursor: grabbing;
+}
+
+.modal-header h2 { margin: 0; font-size: 1.5rem; color: var(--text-primary); }
 .close-icon {
     background: var(--input-bg); color: var(--text-secondary);
-    border: none; width: 36px; height: 36px; border-radius: 50%;
-    font-size: 1.2rem; cursor: pointer; transition: 0.2s;
+    border: none; width: 32px; height: 32px; border-radius: 50%;
+    font-size: 1rem; cursor: pointer; transition: 0.2s;
     display: flex; align-items: center; justify-content: center;
 }
 .close-icon:hover { background: var(--danger); color: white; transform: rotate(90deg); }
 
-/* Modal Body */
-.modal-body { padding: 0 30px 30px; flex: 1; overflow-y: auto; }
+/* Body & Footer */
+.modal-body { padding: 30px; flex: 1; overflow-y: auto; }
 .scrollable { overflow-y: auto; }
 
-/* Input Styling */
+/* Glass Inputs */
 .input-group { margin-bottom: 20px; }
 .input-group label {
     display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);
     margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;
 }
-
 .glass-input {
-    background: var(--input-bg);
-    padding: 16px; border-radius: 14px;
+    background: var(--input-bg); padding: 14px; border-radius: 12px;
     font-size: 1rem; color: var(--text-primary);
     border: 2px solid transparent; transition: 0.2s;
 }
-.glass-input:focus {
-    background: white; border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-}
+.glass-input:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
 .big-input { font-size: 1.2rem; font-weight: 600; }
 .row-group { display: flex; gap: 20px; }
 .row-group .input-group { flex: 1; }
 
-/* Modal Footer */
 .modal-footer {
-    padding: 20px 30px;
-    background: var(--input-bg);
-    border-bottom-left-radius: 28px;
-    border-bottom-right-radius: 28px;
+    padding: 20px 30px; background: var(--input-bg);
+    border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
     display: flex; justify-content: flex-end; gap: 15px;
 }
 
 .btn-primary-wide {
     background: var(--primary-gradient); color: white; border: none;
-    padding: 14px 30px; border-radius: 12px; font-weight: 600;
+    padding: 12px 30px; border-radius: 12px; font-weight: 600;
     font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     transition: 0.2s;
 }
 .btn-primary-wide:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5); }
-
-.btn-ghost {
-    background: transparent; color: var(--text-secondary); border: none;
-    font-weight: 600; cursor: pointer; padding: 10px 20px;
-}
+.btn-ghost { background: transparent; color: var(--text-secondary); border: none; font-weight: 600; cursor: pointer; padding: 10px 20px; }
 .btn-ghost:hover { color: var(--text-primary); background: rgba(0,0,0,0.05); border-radius: 12px; }
 
-/* --- NOTE SPECIFIC MODAL STYLES --- */
-.modal-large { max-width: 800px; height: 80vh; }
-.no-border { padding-bottom: 10px; }
-
-.invisible-title {
-    font-size: 2.2rem; font-weight: 700; background: transparent;
-    padding: 0; color: var(--text-primary);
-}
-.invisible-title::placeholder { color: var(--text-secondary); opacity: 0.5; }
-
-.invisible-body {
-    background: transparent; font-size: 1.1rem; line-height: 1.6;
-    color: var(--text-secondary); height: 100%; resize: none;
-    min-height: 300px;
-}
-
-.toolbar {
-    background: white; border-top: 1px solid rgba(0,0,0,0.05);
-    display: flex; justify-content: space-between; align-items: center;
-}
+/* Note Specific */
+.modal-large { width: 800px; height: 80vh; }
+.no-border { border-bottom: none; }
+.invisible-title { font-size: 2rem; font-weight: 700; background: transparent; padding: 0; color: var(--text-primary); }
+.invisible-body { background: transparent; font-size: 1.1rem; line-height: 1.6; color: var(--text-secondary); height: 100%; resize: none; min-height: 300px; }
+.toolbar { background: white; border-top: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
 .tools-left { display: flex; gap: 15px; align-items: center; flex: 1; }
-.tool-btn { 
-    cursor: pointer; padding: 8px 12px; border-radius: 8px; 
-    background: var(--input-bg); transition: 0.2s;
-}
+.tool-btn { cursor: pointer; padding: 8px 12px; border-radius: 8px; background: var(--input-bg); transition: 0.2s; }
 .tool-btn:hover { background: #e2e8f0; }
-
-.tag-input {
-    background: transparent; border-bottom: 2px solid transparent;
-    width: 200px; padding: 5px; font-size: 0.9rem;
-}
+.tag-input { background: transparent; border-bottom: 2px solid transparent; width: 200px; padding: 5px; font-size: 0.9rem; }
 .tag-input:focus { border-color: var(--primary); }
-
-.image-preview-box {
-    margin-top: 20px; position: relative; display: inline-block;
-}
-.image-preview-box img {
-    max-height: 250px; border-radius: 16px; 
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-.remove-img {
-    position: absolute; top: -10px; right: -10px;
-    background: var(--danger); color: white; border: none;
-    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
-}
+.image-preview-box { margin-top: 20px; position: relative; display: inline-block; }
+.image-preview-box img { max-height: 250px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+.remove-img { position: absolute; top: -10px; right: -10px; background: var(--danger); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
 .hidden { display: none; }
 
 /* Mobile Support */
 .mobile-toggle { display: none; position: fixed; top: 20px; left: 20px; z-index: 100; background: var(--primary); border: none; padding: 10px; border-radius: 8px; color: white; }
 .page { display: none; animation: fadeIn 0.4s; }
 .page.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 768px) {
     .mobile-toggle { display: block; }
@@ -272,6 +244,6 @@ body.dark-mode .task-card:hover { background: #2d3748; }
     .sidebar.open { left: 0; }
     .main-content { padding: 80px 20px; }
     .row-group { flex-direction: column; gap: 0; }
-    .modal-glass { width: 95%; max-height: 90vh; }
+    .modal-glass { width: 95%; height: auto; max-height: 90vh; }
     .timer-display { font-size: 4rem; }
 }

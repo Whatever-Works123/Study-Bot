@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyBox</title>
+    <title>StudyBox OS</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -30,8 +30,8 @@
 
     <div class="main-content">
         <div id="home" class="page active">
-            <h1>Hello, Student! 👋</h1>
-            <div class="stats-grid">
+            <h1 class="fade-in">Hello, Student! 👋</h1>
+            <div class="stats-grid fade-in" style="animation-delay: 0.1s;">
                 <div class="card">
                     <div class="stat-number" id="stat-notes">0</div>
                     <p style="color: var(--text-secondary); font-weight: 500;">Knowledge Base</p>
@@ -46,8 +46,8 @@
                 </div>
             </div>
             
-            <h3 style="margin: 40px 0 20px; font-weight: 600;">🚀 Up Next</h3>
-            <div id="upcoming-tasks"></div>
+            <h3 class="fade-in" style="margin: 40px 0 20px; font-weight: 600; animation-delay: 0.2s;">🚀 Up Next</h3>
+            <div id="upcoming-tasks" class="fade-in" style="animation-delay: 0.3s;"></div>
         </div>
 
         <div id="timer" class="page">
@@ -107,8 +107,8 @@
     </div>
 
     <div id="todo-modal" class="modal-overlay">
-        <div class="modal-glass">
-            <div class="modal-header">
+        <div class="modal-glass" id="todo-window">
+            <div class="modal-header draggable-handle" id="todo-header">
                 <div>
                     <h2>New Task</h2>
                     <p style="color: var(--text-secondary); font-size: 0.9rem;">What's on your mind?</p>
@@ -151,8 +151,8 @@
     </div>
 
     <div id="note-modal" class="modal-overlay">
-        <div class="modal-glass modal-large">
-            <div class="modal-header no-border">
+        <div class="modal-glass modal-large" id="note-window">
+            <div class="modal-header no-border draggable-handle" id="note-header">
                 <input type="text" id="note-title" placeholder="Untitled Note" class="invisible-title">
                 <button class="close-icon" onclick="closeNoteModal()">✕</button>
             </div>

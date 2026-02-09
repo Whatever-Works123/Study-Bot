@@ -4,6 +4,11 @@ let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
 let editingNoteId = null;
 let currentNoteImage = null;
 
+// --- INITIALIZATION ---
+// Apply draggable logic to our windows
+makeElementDraggable(document.getElementById("todo-window"), document.getElementById("todo-header"));
+makeElementDraggable(document.getElementById("note-window"), document.getElementById("note-header"));
+
 function saveData() {
     try {
         localStorage.setItem('todos', JSON.stringify(todos));
@@ -16,10 +21,16 @@ function saveData() {
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
 function showPage(pageId) {
+    // AUTO-CLOSE FEATURE: Close any open windows when switching pages
+    closeTodoModal();
+    closeNoteModal();
+
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
+    
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     if(event) event.currentTarget.classList.add('active');
+    
     if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -42,6 +53,52 @@ function updateStats() {
                 </div>
             </div>
         `).join('');
+    }
+}
+
+/* --- DRAG LOGIC --- */
+function makeElementDraggable(element, handle) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    handle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+        // Get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // Call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        // Calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // Set the element's new position:
+        // We use transform translate instead of top/left to keep it smooth and relative to center
+        // Note: element.style.transform might contain 'scale', so we need to handle that.
+        // For simplicity in this layout, we are manipulating top/left relative to current visual position
+        
+        let currentTop = element.offsetTop;
+        let currentLeft = element.offsetLeft;
+        
+        // Since the element is centered via flexbox in the overlay, we need to switch it to absolute positioning
+        // the first time we drag it so it moves freely.
+        element.style.position = "absolute";
+        element.style.margin = "0"; // Remove auto margins
+        element.style.top = (currentTop - pos2) + "px";
+        element.style.left = (currentLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        // Stop moving when mouse button is released:
+        document.onmouseup = null;
+        document.onmousemove = null;
     }
 }
 
@@ -76,6 +133,14 @@ function resetTimer() { clearInterval(timerInterval); isTimerRunning = false; se
 function openTodoModal() { 
     ['modal-todo-text','modal-todo-desc','modal-todo-date'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('modal-todo-priority').value = 'medium';
+    
+    // Reset position for fresh look
+    const win = document.getElementById('todo-window');
+    win.style.position = ''; 
+    win.style.top = ''; 
+    win.style.left = ''; 
+    win.style.margin = '';
+
     document.getElementById('todo-modal').classList.add('show');
 }
 function closeTodoModal() { document.getElementById('todo-modal').classList.remove('show'); }
@@ -118,6 +183,14 @@ function deleteTodo(id) { if(confirm("Delete task?")) { todos = todos.filter(t =
 function openNoteModal(id=null) {
     editingNoteId = id;
     currentNoteImage = null;
+    
+    // Reset position
+    const win = document.getElementById('note-window');
+    win.style.position = ''; 
+    win.style.top = ''; 
+    win.style.left = ''; 
+    win.style.margin = '';
+
     const modal = document.getElementById('note-modal');
     modal.classList.add('show');
     
