@@ -2,7 +2,7 @@ let todos = JSON.parse(localStorage.getItem('todos')) || [];
 let notes = JSON.parse(localStorage.getItem('notes')) || [];
 let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
 let editingNoteId = null;
-let currentNoteImage = null; // Store image data temporary
+let currentNoteImage = null;
 
 function saveData() {
     try {
@@ -32,20 +32,20 @@ function updateStats() {
     const container = document.getElementById('upcoming-tasks');
     
     if(upcoming.length === 0) {
-        container.innerHTML = `<div class="card" style="text-align:center; color: var(--text-secondary); padding: 40px;">🎉 No urgent tasks! Time to relax.</div>`;
+        container.innerHTML = `<div class="card" style="text-align:center; color: var(--text-secondary); padding: 30px;">🎉 No urgent tasks!</div>`;
     } else {
         container.innerHTML = upcoming.map(t => `
             <div class="task-card priority-${t.priority}">
                 <div style="flex:1">
-                    <div class="task-title">${t.text}</div>
-                    <div class="date-badge" style="width: fit-content; margin-top:5px; font-size: 0.8rem; opacity: 0.8;">📅 ${new Date(t.dueDate).toLocaleDateString()}</div>
+                    <div style="font-weight:600">${t.text}</div>
+                    <div style="font-size:0.8rem; opacity:0.7;">📅 ${new Date(t.dueDate).toLocaleDateString()}</div>
                 </div>
             </div>
         `).join('');
     }
 }
 
-/* --- TIMER LOGIC --- */
+/* --- TIMER --- */
 let timerInterval, timeLeft = 25 * 60, isTimerRunning = false;
 function setTimerMode(minutes) {
     clearInterval(timerInterval); isTimerRunning = false; timeLeft = minutes * 60;
@@ -72,7 +72,7 @@ function startTimer() {
 }
 function resetTimer() { clearInterval(timerInterval); isTimerRunning = false; setTimerMode(25); document.querySelector('.mode-btn').click(); }
 
-/* --- TO-DO LOGIC --- */
+/* --- TO-DO MODAL FUNCTIONS --- */
 function openTodoModal() { 
     ['modal-todo-text','modal-todo-desc','modal-todo-date'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('modal-todo-priority').value = 'medium';
@@ -100,25 +100,21 @@ function renderTodos() {
     const sorted = [...todos].sort((a,b) => (a.completed - b.completed) || (a.priority === 'high' ? -1 : 1));
     
     list.innerHTML = sorted.map(t => `
-        <div class="task-card priority-${t.priority} ${t.completed ? 'completed' : ''}" style="opacity: ${t.completed ? 0.6 : 1}">
-            <input type="checkbox" style="width: 20px; height: 20px; margin-top: 4px; cursor:pointer;" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})">
+        <div class="task-card priority-${t.priority}" style="opacity: ${t.completed ? 0.5 : 1}">
+            <input type="checkbox" style="width: 20px; height: 20px; cursor:pointer;" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})">
             <div style="flex:1">
-                <div class="task-title" style="text-decoration: ${t.completed ? 'line-through' : 'none'}">${t.text}</div>
-                ${t.desc ? `<div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;">${t.desc}</div>` : ''}
-                <div style="display:flex; gap: 10px; margin-top: 10px;">
-                    <span class="badge badge-${t.priority}">${t.priority}</span>
-                    ${t.dueDate ? `<span class="date-badge" style="font-size:0.8rem; opacity:0.8;">📅 ${new Date(t.dueDate).toLocaleDateString()}</span>` : ''}
-                </div>
+                <div style="text-decoration: ${t.completed ? 'line-through' : 'none'}; font-weight: 600;">${t.text}</div>
+                ${t.desc ? `<div style="font-size: 0.85rem; color: var(--text-secondary);">${t.desc}</div>` : ''}
             </div>
-            <button class="btn btn-outline" style="padding: 5px 10px; border:none; color: var(--danger);" onclick="deleteTodo(${t.id})">✕</button>
+            <button class="btn-ghost" style="color: var(--danger); padding: 8px;" onclick="deleteTodo(${t.id})">✕</button>
         </div>
-    `).join('') || `<div style="text-align:center; padding: 40px; color: var(--text-secondary);">No tasks found. Get started! 🚀</div>`;
+    `).join('') || `<div style="text-align:center; color: var(--text-secondary); padding: 40px;">No tasks. You're all caught up! 🌟</div>`;
 }
 
 function toggleTodo(id) { const t = todos.find(x => x.id === id); if(t) t.completed = !t.completed; saveData(); renderTodos(); }
 function deleteTodo(id) { if(confirm("Delete task?")) { todos = todos.filter(t => t.id !== id); saveData(); renderTodos(); } }
 
-/* --- NOTES LOGIC --- */
+/* --- NOTE MODAL FUNCTIONS --- */
 function openNoteModal(id=null) {
     editingNoteId = id;
     currentNoteImage = null;
@@ -173,13 +169,19 @@ function saveNote() {
     const content = document.getElementById('note-content').value;
     const tags = document.getElementById('note-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
     
-    if(!title) return alert("Title required!");
+    if(!title) return alert("Note needs a title!");
     
+    const noteObj = {
+        id: editingNoteId || Date.now(),
+        title, content, tags,
+        image: currentNoteImage
+    };
+
     if(editingNoteId) {
         const idx = notes.findIndex(n=>n.id===editingNoteId);
-        notes[idx] = {...notes[idx], title, content, tags, image: currentNoteImage};
+        notes[idx] = noteObj;
     } else {
-        notes.unshift({id: Date.now(), title, content, tags, image: currentNoteImage});
+        notes.unshift(noteObj);
     }
     saveData(); closeNoteModal(); renderNotes();
 }
@@ -194,12 +196,12 @@ function renderNotes() {
             ${n.image ? `<img src="${n.image}">` : ''}
             <h3>${n.title}</h3>
             <div class="note-content">${n.content.substring(0, 100)}${n.content.length > 100 ? '...' : ''}</div>
-            <div style="margin-top: 15px; font-size: 0.8rem; color: var(--primary);">
+            <div style="margin-top: auto; padding-top: 10px; font-size: 0.8rem; color: var(--primary);">
                 ${n.tags.map(t=>`#${t}`).join(' ')}
             </div>
-            <button onclick="event.stopPropagation(); deleteNote(${n.id})" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); border:none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; color: var(--danger); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🗑️</button>
+            <button onclick="event.stopPropagation(); deleteNote(${n.id})" style="position: absolute; top: 10px; right: 10px; background: white; border:none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; color: var(--danger); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✕</button>
         </div>
-    `).join('') || `<div style="grid-column:1/-1; text-align:center; color: var(--text-secondary);">No notes found.</div>`;
+    `).join('') || `<div style="grid-column:1/-1; text-align:center; color: var(--text-secondary); padding: 20px;">No notes yet. Create one! 📝</div>`;
 }
 function deleteNote(id) { if(confirm("Delete note?")) { notes = notes.filter(n=>n.id!==id); saveData(); renderNotes(); } }
 
@@ -214,11 +216,9 @@ if(localStorage.getItem('darkMode') === 'true') {
     document.getElementById('dark-mode-toggle').checked = true;
 }
 
-// Global Event Listeners
-window.onclick = e => { if(e.target.classList.contains('modal')) e.target.classList.remove('show'); }
-document.addEventListener('keydown', (e) => { if(e.key === "Escape") document.querySelectorAll('.modal').forEach(m => m.classList.remove('show')); });
+window.onclick = e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('show'); }
+document.addEventListener('keydown', (e) => { if(e.key === "Escape") document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); });
 
-// Initial render calls
 renderTodos(); 
 renderNotes(); 
 updateStats();
