@@ -2,6 +2,7 @@ let todos = JSON.parse(localStorage.getItem('todos')) || [];
 let notes = JSON.parse(localStorage.getItem('notes')) || [];
 let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
 let editingNoteId = null;
+let currentNoteImage = null; // Store image data temporary
 
 function saveData() {
     try {
@@ -18,7 +19,6 @@ function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    // Ensure event exists before accessing it (safe for programmatic calls)
     if(event) event.currentTarget.classList.add('active');
     if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
 }
@@ -30,21 +30,22 @@ function updateStats() {
 
     const upcoming = todos.filter(t => !t.completed && t.dueDate).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 3);
     const container = document.getElementById('upcoming-tasks');
+    
     if(upcoming.length === 0) {
-        container.innerHTML = `<div class="card" style="text-align:center; color: var(--text-secondary);">🎉 No urgent tasks! Time to relax.</div>`;
+        container.innerHTML = `<div class="card" style="text-align:center; color: var(--text-secondary); padding: 40px;">🎉 No urgent tasks! Time to relax.</div>`;
     } else {
         container.innerHTML = upcoming.map(t => `
             <div class="task-card priority-${t.priority}">
                 <div style="flex:1">
                     <div class="task-title">${t.text}</div>
-                    <div class="date-badge" style="width: fit-content; margin-top:5px;">📅 ${new Date(t.dueDate).toLocaleDateString()}</div>
+                    <div class="date-badge" style="width: fit-content; margin-top:5px; font-size: 0.8rem; opacity: 0.8;">📅 ${new Date(t.dueDate).toLocaleDateString()}</div>
                 </div>
             </div>
         `).join('');
     }
 }
 
-// Timer
+/* --- TIMER LOGIC --- */
 let timerInterval, timeLeft = 25 * 60, isTimerRunning = false;
 function setTimerMode(minutes) {
     clearInterval(timerInterval); isTimerRunning = false; timeLeft = minutes * 60;
@@ -71,18 +72,18 @@ function startTimer() {
 }
 function resetTimer() { clearInterval(timerInterval); isTimerRunning = false; setTimerMode(25); document.querySelector('.mode-btn').click(); }
 
-// To-Do
+/* --- TO-DO LOGIC --- */
 function openTodoModal() { 
-    ['text','desc','date'].forEach(id => document.getElementById('modal-todo-'+id).value = '');
+    ['modal-todo-text','modal-todo-desc','modal-todo-date'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('modal-todo-priority').value = 'medium';
     document.getElementById('todo-modal').classList.add('show');
-    document.getElementById('todo-modal').style.display = 'flex';
 }
-function closeTodoModal() { document.getElementById('todo-modal').style.display = 'none'; }
+function closeTodoModal() { document.getElementById('todo-modal').classList.remove('show'); }
 
 function saveTodoFromModal() {
     const text = document.getElementById('modal-todo-text').value.trim();
-    if(!text) return;
+    if(!text) return alert("Please enter a task name");
+    
     todos.push({
         id: Date.now(),
         text,
@@ -97,15 +98,16 @@ function saveTodoFromModal() {
 function renderTodos() {
     const list = document.getElementById('todo-list');
     const sorted = [...todos].sort((a,b) => (a.completed - b.completed) || (a.priority === 'high' ? -1 : 1));
+    
     list.innerHTML = sorted.map(t => `
         <div class="task-card priority-${t.priority} ${t.completed ? 'completed' : ''}" style="opacity: ${t.completed ? 0.6 : 1}">
-            <input type="checkbox" style="width: 20px; height: 20px; margin-top: 4px;" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})">
+            <input type="checkbox" style="width: 20px; height: 20px; margin-top: 4px; cursor:pointer;" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})">
             <div style="flex:1">
                 <div class="task-title" style="text-decoration: ${t.completed ? 'line-through' : 'none'}">${t.text}</div>
                 ${t.desc ? `<div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;">${t.desc}</div>` : ''}
                 <div style="display:flex; gap: 10px; margin-top: 10px;">
                     <span class="badge badge-${t.priority}">${t.priority}</span>
-                    ${t.dueDate ? `<span class="date-badge">📅 ${new Date(t.dueDate).toLocaleDateString()}</span>` : ''}
+                    ${t.dueDate ? `<span class="date-badge" style="font-size:0.8rem; opacity:0.8;">📅 ${new Date(t.dueDate).toLocaleDateString()}</span>` : ''}
                 </div>
             </div>
             <button class="btn btn-outline" style="padding: 5px 10px; border:none; color: var(--danger);" onclick="deleteTodo(${t.id})">✕</button>
@@ -116,49 +118,70 @@ function renderTodos() {
 function toggleTodo(id) { const t = todos.find(x => x.id === id); if(t) t.completed = !t.completed; saveData(); renderTodos(); }
 function deleteTodo(id) { if(confirm("Delete task?")) { todos = todos.filter(t => t.id !== id); saveData(); renderTodos(); } }
 
-// Notes
+/* --- NOTES LOGIC --- */
 function openNoteModal(id=null) {
     editingNoteId = id;
+    currentNoteImage = null;
     const modal = document.getElementById('note-modal');
-    modal.style.display = 'flex';
+    modal.classList.add('show');
+    
+    const previewContainer = document.getElementById('image-preview-container');
+    const previewImg = document.getElementById('image-preview');
+
     if(id) {
         const n = notes.find(x => x.id === id);
         document.getElementById('note-title').value = n.title;
         document.getElementById('note-content').value = n.content;
         document.getElementById('note-tags').value = n.tags.join(', ');
-        document.getElementById('image-preview').innerHTML = n.image ? `<img src="${n.image}" style="width:100%">` : '';
+        
+        if(n.image) {
+            currentNoteImage = n.image;
+            previewImg.src = n.image;
+            previewContainer.classList.remove('hidden');
+        } else {
+            previewContainer.classList.add('hidden');
+        }
     } else {
         document.getElementById('note-title').value = '';
         document.getElementById('note-content').value = '';
         document.getElementById('note-tags').value = '';
-        document.getElementById('image-preview').innerHTML = '';
+        previewContainer.classList.add('hidden');
     }
 }
-function closeNoteModal() { document.getElementById('note-modal').style.display = 'none'; }
+function closeNoteModal() { document.getElementById('note-modal').classList.remove('show'); }
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentNoteImage = e.target.result;
+            document.getElementById('image-preview').src = e.target.result;
+            document.getElementById('image-preview-container').classList.remove('hidden');
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearImage() {
+    document.getElementById('note-image').value = '';
+    currentNoteImage = null;
+    document.getElementById('image-preview-container').classList.add('hidden');
+}
 
 function saveNote() {
     const title = document.getElementById('note-title').value;
     const content = document.getElementById('note-content').value;
     const tags = document.getElementById('note-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
-    const file = document.getElementById('note-image').files[0];
     
     if(!title) return alert("Title required!");
     
-    const process = (img) => {
-        if(editingNoteId) {
-            const idx = notes.findIndex(n=>n.id===editingNoteId);
-            notes[idx] = {...notes[idx], title, content, tags, image: img || notes[idx].image};
-        } else {
-            notes.unshift({id: Date.now(), title, content, tags, image: img});
-        }
-        saveData(); closeNoteModal(); renderNotes();
-    };
-
-    if(file) {
-        const r = new FileReader();
-        r.onload = e => process(e.target.result);
-        r.readAsDataURL(file);
-    } else process(null);
+    if(editingNoteId) {
+        const idx = notes.findIndex(n=>n.id===editingNoteId);
+        notes[idx] = {...notes[idx], title, content, tags, image: currentNoteImage};
+    } else {
+        notes.unshift({id: Date.now(), title, content, tags, image: currentNoteImage});
+    }
+    saveData(); closeNoteModal(); renderNotes();
 }
 
 function renderNotes() {
@@ -170,7 +193,7 @@ function renderNotes() {
         <div class="card note-card" onclick="openNoteModal(${n.id})">
             ${n.image ? `<img src="${n.image}">` : ''}
             <h3>${n.title}</h3>
-            <div class="note-content">${n.content.substring(0, 100)}...</div>
+            <div class="note-content">${n.content.substring(0, 100)}${n.content.length > 100 ? '...' : ''}</div>
             <div style="margin-top: 15px; font-size: 0.8rem; color: var(--primary);">
                 ${n.tags.map(t=>`#${t}`).join(' ')}
             </div>
@@ -191,10 +214,9 @@ if(localStorage.getItem('darkMode') === 'true') {
     document.getElementById('dark-mode-toggle').checked = true;
 }
 
-// Close modals on click outside
-window.onclick = e => {
-    if(e.target.classList.contains('modal')) e.target.style.display = 'none';
-}
+// Global Event Listeners
+window.onclick = e => { if(e.target.classList.contains('modal')) e.target.classList.remove('show'); }
+document.addEventListener('keydown', (e) => { if(e.key === "Escape") document.querySelectorAll('.modal').forEach(m => m.classList.remove('show')); });
 
 // Initial render calls
 renderTodos(); 
