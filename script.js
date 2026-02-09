@@ -130,10 +130,23 @@ function startTimer() {
 function resetTimer() { clearInterval(timerInterval); isTimerRunning = false; setTimerMode(25); document.querySelector('.mode-btn').click(); }
 
 /* --- TO-DO MODAL FUNCTIONS --- */
+/* --- TO-DO MODAL FUNCTIONS --- */
 function openTodoModal() { 
+    // Clear previous values
     ['modal-todo-text','modal-todo-desc','modal-todo-date'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('modal-todo-priority').value = 'medium';
     
+    // --- NEW CODE: Set Date Limits (Today to +3 Months) ---
+    const dateInput = document.getElementById('modal-todo-date');
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 3); // Add 3 months
+
+    // Format to YYYY-MM-DD for HTML input
+    dateInput.min = today.toISOString().split('T')[0];
+    dateInput.max = maxDate.toISOString().split('T')[0];
+    // ------------------------------------------------------
+
     // Reset position for fresh look
     const win = document.getElementById('todo-window');
     win.style.position = ''; 
