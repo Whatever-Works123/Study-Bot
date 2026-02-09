@@ -1,6 +1,10 @@
+/* =========================================
+   1. GLOBAL RESET & VARIABLES
+   ========================================= */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
+    /* Light Mode Variables */
     --bg-gradient: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
     --sidebar-bg: rgba(255, 255, 255, 0.7);
     --glass-border: 1px solid rgba(255, 255, 255, 0.6);
@@ -10,7 +14,7 @@
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --card-bg: rgba(255, 255, 255, 0.85);
     --modal-bg: #ffffff;
-    --input-bg: #f3f4f6;
+    --input-bg: #eef2f6; /* Higher contrast input bg */
     --radius-lg: 24px;
     --radius-md: 14px;
     --danger: #fc5c7d;
@@ -18,15 +22,29 @@
     --warning: #f6d365;
 }
 
+/* --- NEON NIGHT DARK MODE --- */
 body.dark-mode {
-    --bg-gradient: linear-gradient(120deg, #1a202c 0%, #2d3748 100%);
-    --sidebar-bg: rgba(26, 32, 44, 0.8);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-    --text-primary: #f7fafc;
-    --text-secondary: #a0aec0;
-    --card-bg: rgba(45, 55, 72, 0.8);
-    --modal-bg: #2d3748;
-    --input-bg: rgba(0,0,0,0.3);
+    /* Deep, rich background */
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    
+    /* Darker, translucent panels */
+    --sidebar-bg: rgba(15, 23, 42, 0.6);
+    --card-bg: rgba(30, 41, 59, 0.4); 
+    --modal-bg: rgba(15, 23, 42, 0.95);
+    
+    /* Brighter borders */
+    --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    /* Light text */
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    
+    /* Electric Gradients */
+    --primary: #818cf8;
+    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    
+    /* Dark inputs */
+    --input-bg: rgba(0, 0, 0, 0.3);
 }
 
 body {
@@ -36,9 +54,12 @@ body {
     color: var(--text-primary);
     display: flex;
     overflow: hidden;
+    transition: background 0.5s ease;
 }
 
-/* --- ANIMATIONS --- */
+/* =========================================
+   2. ANIMATIONS
+   ========================================= */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes springOpen { 
     0% { opacity: 0; transform: scale(0.8); } 
@@ -48,7 +69,9 @@ body {
 
 .fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
 
-/* --- SIDEBAR --- */
+/* =========================================
+   3. SIDEBAR
+   ========================================= */
 .sidebar {
     width: 280px;
     background: var(--sidebar-bg);
@@ -69,9 +92,10 @@ body {
 }
 .nav-link:hover { background: rgba(255,255,255,0.4); transform: translateX(5px); }
 .nav-link.active { background: white; color: var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-body.dark-mode .nav-link.active { background: rgba(255,255,255,0.1); color: white; }
 
-/* --- MAIN CONTENT --- */
+/* =========================================
+   4. MAIN CONTENT AREA
+   ========================================= */
 .main-content { flex: 1; padding: 40px 60px; overflow-y: auto; position: relative; }
 h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 30px; }
 
@@ -79,24 +103,54 @@ h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 30px; }
     background: var(--card-bg); backdrop-filter: blur(12px);
     border: var(--glass-border); border-radius: var(--radius-lg);
     padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
 
-/* --- BUTTONS & INPUTS --- */
+/* =========================================
+   5. BUTTONS & INPUTS
+   ========================================= */
 .btn {
     background: var(--primary-gradient); color: white; border: none;
     padding: 12px 28px; border-radius: 50px; font-weight: 600; cursor: pointer;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: 0.3s;
 }
 .btn:hover { transform: scale(1.05); }
+
 .btn-outline {
     background: transparent; border: 2px solid var(--text-secondary);
     color: var(--text-secondary); padding: 10px 24px; border-radius: 50px; cursor: pointer;
 }
+
 input, select, textarea { font-family: inherit; width: 100%; border: none; outline: none; }
 
-/* --- STATS & LISTS --- */
+/* Enhanced Input Styles for Visibility */
+.glass-input {
+    background: var(--input-bg); 
+    padding: 16px;       
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #1a202c;      /* Dark text for readability */
+    font-weight: 600;    
+    border: 2px solid #cbd5e0; 
+    transition: 0.2s;
+}
+.glass-input:focus { 
+    background: white; 
+    border-color: var(--primary); 
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); 
+}
+::placeholder { color: #718096; opacity: 1; }
+
+.big-input { 
+    font-size: 1.5rem;   
+    font-weight: 800;    
+    color: #000000;      
+}
+
+/* =========================================
+   6. STATS & TASK LISTS
+   ========================================= */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px; margin-bottom: 50px; }
 .stat-number { font-size: 3.5rem; font-weight: 800; color: var(--primary); margin-bottom: 5px; }
 
@@ -106,12 +160,13 @@ input, select, textarea { font-family: inherit; width: 100%; border: none; outli
     box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: 0.2s; border: var(--glass-border);
 }
 .task-card:hover { transform: scale(1.01); background: white; }
-body.dark-mode .task-card:hover { background: #2d3748; }
 .priority-high { border-left: 5px solid var(--danger); }
 .priority-medium { border-left: 5px solid var(--warning); }
 .priority-low { border-left: 5px solid var(--success); }
 
-/* --- NOTES GRID --- */
+/* =========================================
+   7. NOTES GRID
+   ========================================= */
 .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
 .note-card { 
     height: 250px; display: flex; flex-direction: column; 
@@ -120,18 +175,20 @@ body.dark-mode .task-card:hover { background: #2d3748; }
 .note-card img { height: 120px; width: 100%; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }
 .note-content { flex: 1; font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); overflow: hidden; }
 
-/* --- TIMER --- */
+/* =========================================
+   8. TIMER
+   ========================================= */
 .timer-display { font-size: 6rem; font-weight: 800; margin: 30px 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .mode-btn { background: none; border: none; padding: 10px 20px; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
 .mode-btn.active { background: rgba(102, 126, 234, 0.1); color: var(--primary); border-radius: 20px; }
 
 /* =========================================
-   === DRAGGABLE WINDOW STYLES ===
+   9. DRAGGABLE WINDOW STYLES (MODALS)
    ========================================= */
 
 .modal-overlay {
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.25); /* Lighter overlay for window feel */
+    background: rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(4px);
     z-index: 1000;
     justify-content: center; align-items: center;
@@ -146,7 +203,7 @@ body.dark-mode .task-card:hover { background: #2d3748; }
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.5);
     display: flex; flex-direction: column;
     max-height: 85vh;
-    position: relative; /* Important for dragging context */
+    position: relative; /* Essential for dragging */
     transform-origin: center;
 }
 
@@ -163,14 +220,9 @@ body.dark-mode .task-card:hover { background: #2d3748; }
     background: rgba(255,255,255,0.01);
 }
 
-/* This class enables the grab cursor */
-.draggable-handle {
-    cursor: grab;
-    user-select: none; /* Prevents highlighting text while dragging */
-}
-.draggable-handle:active {
-    cursor: grabbing;
-}
+/* Draggable Handle Styles */
+.draggable-handle { cursor: grab; user-select: none; }
+.draggable-handle:active { cursor: grabbing; }
 
 .modal-header h2 { margin: 0; font-size: 1.5rem; color: var(--text-primary); }
 .close-icon {
@@ -185,44 +237,12 @@ body.dark-mode .task-card:hover { background: #2d3748; }
 .modal-body { padding: 30px; flex: 1; overflow-y: auto; }
 .scrollable { overflow-y: auto; }
 
-/* Glass Inputs */
 .input-group { margin-bottom: 20px; }
 .input-group label {
-    display: block; 
-    font-size: 0.75rem; 
-    font-weight: 700; 
-    color: var(--text-secondary);
-    margin-bottom: 8px; 
-    letter-spacing: 1px; 
-    text-transform: uppercase;
-}
-/* This controls the bubble look */
-/* Update these two classes in style.css */
-
-.glass-input {
-    background: #eef2f6; /* Slightly darker background for better contrast */
-    padding: 16px;       /* Little more breathing room */
-    border-radius: 12px;
-    font-size: 1rem;
-    color: #1a202c;      /* Very dark grey (almost black) */
-    font-weight: 600;    /* Semi-Bold text */
-    border: 2px solid #cbd5e0; /* Subtle border to define the box */
-    transition: 0.2s;
+    display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);
+    margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase;
 }
 
-.big-input { 
-    font-size: 1.5rem;   /* Much larger */
-    font-weight: 800;    /* Extra Bold */
-    color: #000000;      /* Pure black for the main title */
-}
-
-/* Add this to make the placeholder text (e.g. "Finish Math") easier to read */
-::placeholder {
-    color: #718096;      /* Darker grey placeholder */
-    opacity: 1;
-}
-.glass-input:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
-.big-input { font-size: 1.2rem; font-weight: 600; }
 .row-group { display: flex; gap: 20px; }
 .row-group .input-group { flex: 1; }
 
@@ -242,11 +262,11 @@ body.dark-mode .task-card:hover { background: #2d3748; }
 .btn-ghost { background: transparent; color: var(--text-secondary); border: none; font-weight: 600; cursor: pointer; padding: 10px 20px; }
 .btn-ghost:hover { color: var(--text-primary); background: rgba(0,0,0,0.05); border-radius: 12px; }
 
-/* Note Specific */
+/* Note Modal Specifics */
 .modal-large { width: 800px; height: 80vh; }
 .no-border { border-bottom: none; }
-.invisible-title { font-size: 2rem; font-weight: 700; background: transparent; padding: 0; color: var(--text-primary); }
-.invisible-body { background: transparent; font-size: 1.1rem; line-height: 1.6; color: var(--text-secondary); height: 100%; resize: none; min-height: 300px; }
+.invisible-title { font-size: 2rem; font-weight: 700; background: transparent; padding: 0; color: var(--text-primary); border: none; }
+.invisible-body { background: transparent; font-size: 1.1rem; line-height: 1.6; color: var(--text-secondary); height: 100%; resize: none; min-height: 300px; border: none; }
 .toolbar { background: white; border-top: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
 .tools-left { display: flex; gap: 15px; align-items: center; flex: 1; }
 .tool-btn { cursor: pointer; padding: 8px 12px; border-radius: 8px; background: var(--input-bg); transition: 0.2s; }
@@ -271,4 +291,59 @@ body.dark-mode .task-card:hover { background: #2d3748; }
     .row-group { flex-direction: column; gap: 0; }
     .modal-glass { width: 95%; height: auto; max-height: 90vh; }
     .timer-display { font-size: 4rem; }
+}
+
+/* =========================================
+   10. DARK MODE EXCLUSIVE "PIZZAZZ"
+   ========================================= */
+
+/* Glowing Cards */
+body.dark-mode .card, 
+body.dark-mode .sidebar,
+body.dark-mode .modal-glass {
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .card:hover {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), inset 0 0 20px rgba(99, 102, 241, 0.1); 
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* Neon Text for Stats */
+body.dark-mode .stat-number { text-shadow: 0 0 20px rgba(129, 140, 248, 0.6); }
+
+/* Glowing Active Links */
+body.dark-mode .nav-link.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+}
+body.dark-mode .nav-link:hover { background: rgba(255,255,255,0.1); }
+
+/* Timer Glow */
+body.dark-mode .timer-display { text-shadow: 0 0 30px rgba(168, 85, 247, 0.5); }
+
+/* Input Fields in Dark Mode (Reset to dark) */
+body.dark-mode .glass-input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+}
+body.dark-mode .big-input { color: white; }
+body.dark-mode .glass-input:focus {
+    background: rgba(0, 0, 0, 0.6);
+    border-color: #818cf8;
+    box-shadow: 0 0 15px rgba(129, 140, 248, 0.3);
+}
+
+/* Task List Items */
+body.dark-mode .task-card {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+body.dark-mode .task-card:hover {
+    background: rgba(30, 41, 59, 0.8);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
