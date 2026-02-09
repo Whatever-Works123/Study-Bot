@@ -197,20 +197,29 @@ body.dark-mode .task-card:hover { background: #2d3748; }
     text-transform: uppercase;
 }
 /* This controls the bubble look */
+/* Update these two classes in style.css */
+
 .glass-input {
-    background: var(--input-bg); 
-    padding: 14px; 
+    background: #eef2f6; /* Slightly darker background for better contrast */
+    padding: 16px;       /* Little more breathing room */
     border-radius: 12px;
-    font-size: 1rem; 
-    color: var(--text-primary);
-    border: 2px solid transparent; 
+    font-size: 1rem;
+    color: #1a202c;      /* Very dark grey (almost black) */
+    font-weight: 600;    /* Semi-Bold text */
+    border: 2px solid #cbd5e0; /* Subtle border to define the box */
     transition: 0.2s;
 }
 
-/* This specific class makes the Task Name font bigger */
 .big-input { 
-    font-size: 1.2rem; 
-    font-weight: 600; 
+    font-size: 1.5rem;   /* Much larger */
+    font-weight: 800;    /* Extra Bold */
+    color: #000000;      /* Pure black for the main title */
+}
+
+/* Add this to make the placeholder text (e.g. "Finish Math") easier to read */
+::placeholder {
+    color: #718096;      /* Darker grey placeholder */
+    opacity: 1;
 }
 .glass-input:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
 .big-input { font-size: 1.2rem; font-weight: 600; }
