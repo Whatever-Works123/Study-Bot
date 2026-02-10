@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyBox OS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,7 +21,7 @@
             <div class="nav-link active" onclick="showPage('home')"><span>🏠</span> Dashboard</div>
             <div class="nav-link" onclick="showPage('timer')"><span>⏳</span> Focus Timer</div>
             <div class="nav-link" onclick="showPage('todo')"><span>✅</span> Tasks</div>
-            <div class="nav-link" onclick="showPage('notes')"><span>📝</span> Notes</div>
+            <div class="nav-link" onclick="showPage('notes')"><span>📝</span> Library</div>
             <div style="margin-top: auto; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px;">
                 <div class="nav-link" onclick="showPage('settings')"><span>⚙️</span> Settings</div>
             </div>
@@ -29,38 +29,46 @@
     </div>
 
     <div class="main-content">
+        
         <div id="home" class="page active">
             <h1 class="fade-in">Hello, Student! 👋</h1>
+            
             <div class="stats-grid fade-in" style="animation-delay: 0.1s;">
                 <div class="card">
-                    <div class="stat-number" id="stat-notes">0</div>
-                    <p style="color: var(--text-secondary); font-weight: 500;">Knowledge Base</p>
+                    <div class="stat-number" id="stat-note">0</div>
+                    <p style="color: var(--text-secondary); font-weight: 600;">Notes Created</p>
                 </div>
                 <div class="card">
-                    <div class="stat-number" id="stat-todos">0</div>
-                    <p style="color: var(--text-secondary); font-weight: 500;">Pending Tasks</p>
+                    <div class="stat-number" id="stat-todo">0</div>
+                    <p style="color: var(--text-secondary); font-weight: 600;">Pending Tasks</p>
                 </div>
                 <div class="card">
-                    <div class="stat-number" id="stat-pomodoros">0</div>
-                    <p style="color: var(--text-secondary); font-weight: 500;">Focus Sessions</p>
+                    <div class="stat-number" id="stat-pomo">0</div>
+                    <p style="color: var(--text-secondary); font-weight: 600;">Focus Sessions</p>
                 </div>
             </div>
             
-            <h3 class="fade-in" style="margin: 40px 0 20px; font-weight: 600; animation-delay: 0.2s;">🚀 Up Next</h3>
-            <div id="upcoming-tasks" class="fade-in" style="animation-delay: 0.3s;"></div>
+            <h3 class="fade-in" style="margin: 40px 0 20px; font-weight: 700; animation-delay: 0.2s;">🚀 Recent Activity</h3>
+            <div id="recent-activity" class="fade-in" style="animation-delay: 0.3s; color: var(--text-secondary);">
+                <div class="card" style="padding: 20px;">
+                    <p>Welcome to your new Study OS. Start by adding a task or creating a folder!</p>
+                </div>
+            </div>
         </div>
 
         <div id="timer" class="page">
             <h1 style="text-align: center;">Focus Zone</h1>
             <div class="card" style="text-align: center; max-width: 600px; margin: 0 auto; padding: 50px;">
                 <div class="timer-modes">
-                    <button class="mode-btn active" onclick="setTimerMode(25)">Focus Flow</button>
-                    <button class="mode-btn" onclick="setTimerMode(5)">Short Break</button>
-                    <button class="mode-btn" onclick="setTimerMode(15)">Deep Rest</button>
+                    <button class="mode-btn active" onclick="setMode('pomodoro')">Focus Flow</button>
+                    <button class="mode-btn" onclick="setMode('short')">Short Break</button>
+                    <button class="mode-btn" onclick="setMode('long')">Deep Rest</button>
                 </div>
-                <div class="timer-display" id="timer-display">25:00</div>
+                
+                <div class="timer-display" id="timer-time">25:00</div>
+                
                 <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button class="btn" id="start-btn" onclick="startTimer()" style="padding: 15px 40px; font-size: 1.2rem;">Start Focus</button>
+                    <button class="btn" onclick="startTimer()" style="padding: 15px 40px; font-size: 1.2rem;">Start Focus</button>
                     <button class="btn btn-outline" onclick="resetTimer()">Reset</button>
                 </div>
             </div>
@@ -76,7 +84,7 @@
             <div id="todo-list" style="display: flex; flex-direction: column; gap: 15px;"></div>
         </div>
 
-                <div id="notes" class="page">
+        <div id="notes" class="page">
             <div class="notes-layout">
                 <div class="folder-sidebar">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -87,7 +95,8 @@
                         <div class="folder-item active" onclick="selectFolder('all')" id="folder-all">
                             <span>📚 All Notes</span>
                         </div>
-                        <div id="folder-list"></div>
+                        <div id="folder-list">
+                            </div>
                     </div>
 
                     <button class="btn-ghost" style="width: 100%; text-align: left; margin-top: 15px;" onclick="createFolder()">
@@ -103,39 +112,8 @@
                         </button>
                     </div>
 
-                    <input type="text" id="note-search" placeholder="🔍 Search current folder..." oninput="renderNotes()">
-                    <div class="notes-grid" id="notes-grid"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="note-modal" class="modal-overlay">
-            <div class="modal-glass modal-large" id="note-window">
-                <div class="modal-header no-border draggable-handle" id="note-header">
-                    <input type="text" id="note-title" placeholder="Untitled Note" class="invisible-title">
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <select id="note-folder-select" class="folder-select"></select>
-                        <button class="close-icon" onclick="closeNoteModal()">✕</button>
-                    </div>
-                </div>
-                
-                <div class="modal-body scrollable">
-                    <textarea id="note-content" placeholder="Start typing your brilliance here..." class="invisible-body"></textarea>
-                    
-                    <div id="image-preview-container" class="image-preview-box hidden">
-                        <img id="image-preview" src="">
-                        <button onclick="clearImage()" class="remove-img">✕</button>
-                    </div>
-                </div>
-
-                <div class="modal-footer toolbar">
-                    <div class="tools-left">
-                            <label for="note-image" class="tool-btn" title="Add Image">
-                            📷 <input type="file" id="note-image" accept="image/*" hidden onchange="previewImage(this)">
-                        </label>
-                        <input type="text" id="note-tags" placeholder="#tag1, #tag2" class="tag-input">
-                    </div>
-                    <button class="btn-primary-wide" onclick="saveNote()">Save</button>
+                    <input type="text" id="note-search" placeholder="🔍 Search current folder..." oninput="renderNotes()" class="glass-input">
+                    <div class="notes-grid" id="notes-grid" style="margin-top: 20px;"></div>
                 </div>
             </div>
         </div>
@@ -146,14 +124,14 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
                     <div>
                         <h3 style="margin-bottom: 5px;">Dark Mode</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Switch to a darker theme for night study.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Switch to the Neon Night theme.</p>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
                         <span class="slider"></span>
                     </label>
                 </div>
-                <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--border-color); opacity: 0.2;">
+                <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--glass-border); opacity: 0.3;">
                 <button class="btn" style="background: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);" onclick="clearAllData()">⚠️ Reset All Data</button>
             </div>
         </div>
@@ -164,7 +142,7 @@
             <div class="modal-header draggable-handle" id="todo-header">
                 <div>
                     <h2>New Task</h2>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">What's on your mind?</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">What needs to be done?</p>
                 </div>
                 <button class="close-icon" onclick="closeTodoModal()">✕</button>
             </div>
@@ -198,7 +176,7 @@
 
             <div class="modal-footer">
                 <button class="btn-ghost" onclick="closeTodoModal()">Cancel</button>
-                <button class="btn-primary-wide" onclick="saveTodoFromModal()">Create Task</button>
+                <button class="btn-primary-wide" onclick="saveTodo()">Create Task</button>
             </div>
         </div>
     </div>
@@ -207,7 +185,10 @@
         <div class="modal-glass modal-large" id="note-window">
             <div class="modal-header no-border draggable-handle" id="note-header">
                 <input type="text" id="note-title" placeholder="Untitled Note" class="invisible-title">
-                <button class="close-icon" onclick="closeNoteModal()">✕</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="note-folder-select" class="folder-select glass-input" style="padding: 8px; width: auto; margin:0;"></select>
+                    <button class="close-icon" onclick="closeNoteModal()">✕</button>
+                </div>
             </div>
             
             <div class="modal-body scrollable">
@@ -226,7 +207,7 @@
                     </label>
                     <input type="text" id="note-tags" placeholder="#tag1, #tag2" class="tag-input">
                 </div>
-                <button class="btn-primary-wide" onclick="saveNote()">Save</button>
+                <button class="btn-primary-wide" onclick="saveNote()">Save Note</button>
             </div>
         </div>
     </div>
