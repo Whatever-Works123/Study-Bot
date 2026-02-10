@@ -4,18 +4,22 @@ const safeLoad = (key, def) => { try { return JSON.parse(localStorage.getItem(ke
 let todos = safeLoad('todos', []);
 let notes = safeLoad('notes', []);
 let folders = safeLoad('folders', [{id: 'general', name: 'General'}]);
-// Flashcards Data
 let deckFolders = safeLoad('deckFolders', [{id: 'general', name: 'General'}]);
 let decks = safeLoad('decks', []);
-
 let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
 
 // State
-let currentFolderId = 'all';     // For Notes
-let currentDeckFolderId = 'all'; // For Decks
+let currentFolderId = 'all';
+let currentDeckFolderId = 'all';
 let editingNoteId = null;
 let currentNoteImage = null;
-let tempCards = []; // Stores cards while building a deck
+let tempCards = [];
+
+// Timer
+let timerInterval;
+let timeLeft = 25 * 60;
+let totalTime = 25 * 60; // Needed for ring calculation
+let isRunning = false;
 
 window.onload = () => {
     if(localStorage.getItem('darkMode') === 'true') {
@@ -35,6 +39,13 @@ window.onload = () => {
     renderNotes();
     renderDeckFolders();
     renderDecks();
+    
+    // Init SVG Circle
+    const circle = document.querySelector('.progress-ring__circle');
+    const radius = circle.r.baseVal.value;
+    const circumference = radius * 2 * Math.PI;
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = 0;
 };
 
 function saveData() {
@@ -51,34 +62,94 @@ function updateStats() {
     document.getElementById('stat-note').innerText = notes.length;
     document.getElementById('stat-todo').innerText = todos.filter(t => !t.done).length;
     document.getElementById('stat-deck').innerText = decks.length;
+    document.getElementById('stat-pomo').innerText = pomodoros;
 }
 
 /* ================= 2. NAVIGATION ================= */
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
-    
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     event.currentTarget.classList.add('active');
-    
     if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
-/* ================= 3. TASKS ================= */
-function openTodoModal() { document.getElementById('todo-modal').classList.add('show'); }
+/* ================= 3. TIMER LOGIC (NEW CIRCULAR) ================= */
+function setMode(mode) {
+    document.querySelectorAll('.mode-pill').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    timeLeft = mode === 'pomodoro' ? 25*60 : (mode === 'short' ? 5*60 : 15*60);
+    totalTime = timeLeft; // Reset total for ring calculation
+    
+    document.getElementById('timer-label').innerText = mode.toUpperCase();
+    updateTimer();
+    isRunning = false; clearInterval(timerInterval);
+    document.getElementById('btn-start').innerText = "▶";
+    setProgress(100);
+}
 
+function startTimer() {
+    if(!isRunning) {
+        isRunning = true;
+        document.getElementById('btn-start').innerText = "⏸";
+        timerInterval = setInterval(() => {
+            timeLeft--; 
+            updateTimer();
+            if(timeLeft <= 0) { 
+                clearInterval(timerInterval); 
+                alert('Time up!'); 
+                pomodoros++; 
+                saveData(); 
+                resetTimer();
+            }
+        }, 1000);
+    } else {
+        clearInterval(timerInterval);
+        isRunning = false;
+        document.getElementById('btn-start').innerText = "▶";
+    }
+}
+
+function resetTimer() {
+    clearInterval(timerInterval); 
+    isRunning = false; 
+    document.getElementById('btn-start').innerText = "▶";
+    // Default back to pomodoro or current mode reset
+    timeLeft = totalTime;
+    updateTimer();
+    setProgress(100);
+}
+
+function updateTimer() {
+    const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+    const s = (timeLeft%60).toString().padStart(2,'0');
+    document.getElementById('timer-time').innerText = `${m}:${s}`;
+    
+    // Update Ring
+    const percent = (timeLeft / totalTime) * 100;
+    setProgress(percent);
+}
+
+function setProgress(percent) {
+    const circle = document.querySelector('.progress-ring__circle');
+    const radius = circle.r.baseVal.value;
+    const circumference = radius * 2 * Math.PI;
+    const offset = circumference - (percent / 100) * circumference;
+    circle.style.strokeDashoffset = offset;
+}
+
+/* ================= 4. TASKS ================= */
+function openTodoModal() { document.getElementById('todo-modal').classList.add('show'); }
 function saveTodo() {
     const text = document.getElementById('modal-todo-text').value;
     const date = document.getElementById('modal-todo-date').value;
     const priority = document.getElementById('modal-todo-priority').value;
-    
     if(!text) return alert("Task name required!");
-    
     todos.push({ id: Date.now(), text, date, priority, done: false });
     saveData(); closeModal('todo-modal'); renderTodos();
 }
-
 function renderTodos() {
     const list = document.getElementById('todo-list');
     list.innerHTML = todos.map(t => `
@@ -94,18 +165,16 @@ function renderTodos() {
 function toggleTodo(id) { const t = todos.find(x=>x.id===id); if(t) { t.done=!t.done; saveData(); renderTodos(); } }
 function deleteTodo(id) { if(confirm('Delete?')) { todos=todos.filter(x=>x.id!==id); saveData(); renderTodos(); } }
 
-/* ================= 4. NOTES (FIXED) ================= */
+/* ================= 5. NOTES ================= */
 function createFolder() {
     const name = prompt("Folder Name:");
     if(name) { folders.push({id: 'f'+Date.now(), name}); saveData(); renderFolders(); }
 }
-
 function selectFolder(id) {
     currentFolderId = id;
     document.getElementById('current-folder-title').innerText = id==='all' ? 'All Notes' : folders.find(x=>x.id===id).name;
     renderFolders(); renderNotes();
 }
-
 function renderFolders() {
     const list = document.getElementById('folder-list');
     list.innerHTML = `
@@ -117,7 +186,6 @@ function renderFolders() {
         `).join('')}
     `;
 }
-
 function renderNotes() {
     const search = document.getElementById('note-search').value.toLowerCase();
     const grid = document.getElementById('notes-grid');
@@ -126,7 +194,6 @@ function renderNotes() {
         const matchSearch = n.title.toLowerCase().includes(search);
         return matchFolder && matchSearch;
     });
-    
     grid.innerHTML = filtered.map(n => `
         <div class="card note-card" onclick="openNoteModal(${n.id})">
             ${n.image ? `<img src="${n.image}">` : ''}
@@ -136,15 +203,11 @@ function renderNotes() {
         </div>
     `).join('');
 }
-
 function openNoteModal(id = null) {
     editingNoteId = id;
     const modal = document.getElementById('note-modal');
-    
-    // Populate Folder Select
     const select = document.getElementById('note-folder-select');
     select.innerHTML = folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-    
     if(id) {
         const n = notes.find(x => x.id === id);
         document.getElementById('note-title').value = n.title;
@@ -164,45 +227,24 @@ function openNoteModal(id = null) {
     }
     modal.classList.add('show');
 }
-
 function saveNote() {
     const title = document.getElementById('note-title').value;
     const content = document.getElementById('note-content').value;
     const folderId = document.getElementById('note-folder-select').value;
     const tags = document.getElementById('note-tags').value;
-    
     if(!title) return alert("Note Title is required!");
-    
-    const note = { 
-        id: editingNoteId || Date.now(), 
-        title, content, folderId, 
-        tags: tags.split(',').map(t=>t.trim()), 
-        image: currentNoteImage 
-    };
-
-    if(editingNoteId) {
-        const idx = notes.findIndex(n=>n.id===editingNoteId);
-        notes[idx] = note;
-    } else {
-        notes.unshift(note);
-    }
-    
+    const note = { id: editingNoteId || Date.now(), title, content, folderId, tags: tags.split(',').map(t=>t.trim()), image: currentNoteImage };
+    if(editingNoteId) { const idx = notes.findIndex(n=>n.id===editingNoteId); notes[idx] = note; } 
+    else { notes.unshift(note); }
     saveData(); closeModal('note-modal'); renderNotes();
 }
+function deleteNote(id, e) { e.stopPropagation(); if(confirm('Delete?')) { notes=notes.filter(n=>n.id!==id); saveData(); renderNotes(); } }
 
-function deleteNote(id, e) {
-    e.stopPropagation();
-    if(confirm('Delete note?')) { notes=notes.filter(n=>n.id!==id); saveData(); renderNotes(); }
-}
-
-/* ================= 5. FLASHCARDS (NEW SYSTEM) ================= */
-
-// A. FOLDERS FOR DECKS (Sidebar)
+/* ================= 6. FLASHCARDS ================= */
 function createDeckFolder() {
     const name = prompt("Topic Name:");
     if(name) { deckFolders.push({id:'df'+Date.now(), name}); saveData(); renderDeckFolders(); }
 }
-
 function renderDeckFolders() {
     const list = document.getElementById('deck-folder-list');
     list.innerHTML = `
@@ -213,30 +255,23 @@ function renderDeckFolders() {
             </div>
         `).join('')}
     `;
-    
-    // Also update select inside Deck Builder
     const select = document.getElementById('deck-folder-select');
     if(select) select.innerHTML = deckFolders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
 }
-
 function selectDeckFolder(id) {
     currentDeckFolderId = id;
     document.getElementById('current-deck-folder-title').innerText = id==='all' ? 'All Decks' : deckFolders.find(x=>x.id===id).name;
     renderDeckFolders(); renderDecks();
     closeStudyMode();
 }
-
-// B. DECK BUILDER (Create New Deck + Add Cards)
 function openDeckBuilder() {
     document.getElementById('deck-title').value = '';
     document.getElementById('new-card-front').value = '';
     document.getElementById('new-card-back').value = '';
-    tempCards = [];
-    renderTempCards();
+    tempCards = []; renderTempCards();
     document.getElementById('deck-folder-select').value = currentDeckFolderId==='all' ? 'general' : currentDeckFolderId;
     document.getElementById('deck-modal').classList.add('show');
 }
-
 function addCardToTemp() {
     const front = document.getElementById('new-card-front').value;
     const back = document.getElementById('new-card-back').value;
@@ -248,7 +283,6 @@ function addCardToTemp() {
         renderTempCards();
     }
 }
-
 function renderTempCards() {
     document.getElementById('temp-card-count').innerText = tempCards.length;
     document.getElementById('temp-card-list').innerHTML = tempCards.map((c,i) => `
@@ -258,27 +292,18 @@ function renderTempCards() {
         </div>
     `).join('');
 }
-
 function removeTempCard(i) { tempCards.splice(i,1); renderTempCards(); }
-
 function saveDeck() {
     const title = document.getElementById('deck-title').value;
     const folderId = document.getElementById('deck-folder-select').value;
-    
     if(!title) return alert("Deck name required!");
     if(tempCards.length === 0) return alert("Add at least one card!");
-
     decks.push({ id: Date.now(), title, folderId, cards: [...tempCards] });
-    saveData();
-    closeModal('deck-modal');
-    renderDecks();
+    saveData(); closeModal('deck-modal'); renderDecks();
 }
-
-// C. VIEW & STUDY DECKS
 function renderDecks() {
     const grid = document.getElementById('deck-grid');
     const filtered = decks.filter(d => currentDeckFolderId==='all' || d.folderId===currentDeckFolderId);
-    
     grid.innerHTML = filtered.map(d => `
         <div class="card note-card" style="height:auto; min-height:150px;" onclick="studyDeck(${d.id})">
             <h3>🗂️ ${d.title}</h3>
@@ -288,28 +313,16 @@ function renderDecks() {
         </div>
     `).join('');
 }
-
-function deleteDeck(id, e) {
-    e.stopPropagation();
-    if(confirm("Delete this deck?")) { decks=decks.filter(d=>d.id!==id); saveData(); renderDecks(); }
-}
-
+function deleteDeck(id, e) { e.stopPropagation(); if(confirm("Delete deck?")) { decks=decks.filter(d=>d.id!==id); saveData(); renderDecks(); } }
 function studyDeck(id) {
     const deck = decks.find(d => d.id === id);
     if(!deck) return;
-    
-    // Hide Grid, Show Study Area
     document.getElementById('deck-grid').style.display = 'none';
     document.getElementById('study-area').classList.remove('hidden');
     document.getElementById('current-deck-folder-title').innerText = `Studying: ${deck.title}`;
-    
-    // Render first card (simple stack visual)
     const container = document.getElementById('active-study-card');
-    if(deck.cards.length > 0) {
-        renderFlashcard(deck.cards[0], container);
-    }
+    if(deck.cards.length > 0) renderFlashcard(deck.cards[0], container);
 }
-
 function renderFlashcard(card, container) {
     container.innerHTML = `
         <div class="flashcard-scene" onclick="this.children[0].classList.toggle('flipped')">
@@ -321,55 +334,17 @@ function renderFlashcard(card, container) {
         <p style="text-align:center; margin-top:15px; color:var(--text-secondary);">(Click card to flip)</p>
     `;
 }
-
 function closeStudyMode() {
     document.getElementById('study-area').classList.add('hidden');
     document.getElementById('deck-grid').style.display = 'grid';
-    // Reset Title
     selectDeckFolder(currentDeckFolderId);
 }
 
-
-/* ================= 6. UTILS ================= */
+/* ================= UTILS ================= */
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function clearAllData() { if(confirm("Reset everything?")) { localStorage.clear(); location.reload(); } }
-function previewImage(input) {
-    if(input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => { currentNoteImage=e.target.result; document.getElementById('image-preview').src=currentNoteImage; document.getElementById('image-preview-container').className=''; };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
+function previewImage(input) { if(input.files && input.files[0]) { const r=new FileReader(); r.onload=e=>{currentNoteImage=e.target.result; document.getElementById('image-preview').src=currentNoteImage; document.getElementById('image-preview-container').className='';}; r.readAsDataURL(input.files[0]); } }
 function clearImage() { currentNoteImage=null; document.getElementById('image-preview-container').className='hidden'; document.getElementById('note-image').value=''; }
-
-function dragElement(elmnt) {
-    let pos1=0, pos2=0, pos3=0, pos4=0;
-    const header = elmnt.querySelector(".draggable-handle");
-    if(header) header.onmousedown = dragMouseDown;
-    function dragMouseDown(e) {
-        // Prevent drag if clicking input
-        if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
-        e.preventDefault(); pos3=e.clientX; pos4=e.clientY;
-        document.onmouseup=closeDragElement; document.onmousemove=elementDrag;
-    }
-    function elementDrag(e) {
-        e.preventDefault();
-        pos1=pos3-e.clientX; pos2=pos4-e.clientY;
-        pos3=e.clientX; pos4=e.clientY;
-        elmnt.style.top=(elmnt.offsetTop-pos2)+"px"; elmnt.style.left=(elmnt.offsetLeft-pos1)+"px";
-        elmnt.style.position="absolute";
-    }
-    function closeDragElement() { document.onmouseup=null; document.onmousemove=null; }
-}
-
-// Timer
-function startTimer() { if(!isRunning) { isRunning=true; timerInterval=setInterval(()=>{ timeLeft--; updateTimer(); if(timeLeft<=0) { clearInterval(timerInterval); alert('Done!'); pomodoros++; saveData(); }}, 1000); }}
-function updateTimer() { document.getElementById('timer-time').innerText = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`; }
-function resetTimer() { clearInterval(timerInterval); isRunning=false; timeLeft=25*60; updateTimer(); }
-function setMode(m) { 
-    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active')); event.target.classList.add('active');
-    timeLeft = m==='pomodoro'?25*60 : m==='short'?5*60 : 15*60; updateTimer();
-}
-
+function dragElement(elmnt) { let pos1=0,pos2=0,pos3=0,pos4=0; const header=elmnt.querySelector(".draggable-handle"); if(header) header.onmousedown=dragMouseDown; function dragMouseDown(e){ if(['INPUT','SELECT','BUTTON','TEXTAREA'].includes(e.target.tagName)) return; e.preventDefault(); pos3=e.clientX; pos4=e.clientY; document.onmouseup=closeDragElement; document.onmousemove=elementDrag; } function elementDrag(e){ e.preventDefault(); pos1=pos3-e.clientX; pos2=pos4-e.clientY; pos3=e.clientX; pos4=e.clientY; elmnt.style.top=(elmnt.offsetTop-pos2)+"px"; elmnt.style.left=(elmnt.offsetLeft-pos1)+"px"; elmnt.style.position='absolute'; } function closeDragElement(){ document.onmouseup=null; document.onmousemove=null; } }
 window.onclick = e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('show'); };
 function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', document.body.classList.contains('dark-mode')); }
