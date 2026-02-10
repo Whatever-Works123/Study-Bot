@@ -1,28 +1,161 @@
+/* =========================================
+   1. GLOBAL VARIABLES & INITIAL LOAD
+   ========================================= */
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
-/* --- DATA INITIALIZATION --- */
-let todos = JSON.parse(localStorage.getItem('todos')) || [];
-// Load Notes
-
 let notes = JSON.parse(localStorage.getItem('notes')) || [];
-// Load Folders (Default to 'General' if empty)
 let folders = JSON.parse(localStorage.getItem('folders')) || [{id: 'general', name: 'General'}];
 let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
 
+// State Variables
 let editingNoteId = null;
 let currentNoteImage = null;
-let currentFolderId = 'all'; // Default view
+let currentFolderId = 'all'; // 'all' shows everything
 
-/* --- FOLDER LOGIC --- */
+// Timer Variables
+let timerInterval;
+let timeLeft = 25 * 60;
+let isRunning = false;
+let currentMode = 'pomodoro'; // 'pomodoro', 'short', 'long'
+
+// Load everything on start
+window.onload = () => {
+    updateStats();
+    renderTodos();
+    renderFolders();
+    renderNotes();
+    updateTimerDisplay();
+    
+    // Apply Dark Mode if saved
+    if(localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('dark-mode-toggle').checked = true;
+    }
+
+    // Initialize Draggable Windows
+    dragElement(document.getElementById("todo-window"));
+    dragElement(document.getElementById("note-window"));
+};
+
+/* =========================================
+   2. NAVIGATION & SAVING
+   ========================================= */
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+
 function saveData() {
     try {
         localStorage.setItem('todos', JSON.stringify(todos));
         localStorage.setItem('notes', JSON.stringify(notes));
-        localStorage.setItem('folders', JSON.stringify(folders)); // Save folders
+        localStorage.setItem('folders', JSON.stringify(folders));
         localStorage.setItem('pomodoros', pomodoros);
         updateStats();
-    } catch (e) { alert("Storage full!"); }
+    } catch (e) { alert("Storage full! Please delete some images."); }
 }
 
+function updateStats() {
+    document.getElementById('stat-todo').innerText = todos.filter(t => !t.done).length;
+    document.getElementById('stat-note').innerText = notes.length;
+    document.getElementById('stat-pomo').innerText = pomodoros;
+}
+
+/* =========================================
+   3. TO-DO LOGIC (With 3-Month Limit)
+   ========================================= */
+function renderTodos() {
+    const list = document.getElementById('todo-list');
+    list.innerHTML = '';
+    
+    // Sort: High Priority first, then by Date
+    todos.sort((a, b) => {
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        if(priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+        }
+        return new Date(a.date) - new Date(b.date);
+    });
+
+    todos.forEach(todo => {
+        const div = document.createElement('div');
+        div.className = `task-card priority-${todo.priority}`;
+        if(todo.done) div.style.opacity = '0.5';
+        
+        div.innerHTML = `
+            <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo(${todo.id})" style="width: 20px; height: 20px;">
+            <div style="flex:1; text-decoration: ${todo.done ? 'line-through' : 'none'}">
+                <div style="font-weight: 600; font-size: 1.1rem;">${todo.text}</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary);">📅 ${todo.date} &nbsp;•&nbsp; ${todo.desc}</div>
+            </div>
+            <button onclick="deleteTodo(${todo.id})" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem;">&times;</button>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function openTodoModal() { 
+    // Clear inputs
+    ['modal-todo-text','modal-todo-desc','modal-todo-date'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('modal-todo-priority').value = 'medium';
+
+    // --- DATE LIMIT LOGIC (Today to +3 Months) ---
+    const dateInput = document.getElementById('modal-todo-date');
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 3);
+
+    dateInput.min = today.toISOString().split('T')[0];
+    dateInput.max = maxDate.toISOString().split('T')[0];
+    // ---------------------------------------------
+
+    // Reset position
+    const win = document.getElementById('todo-window');
+    win.style.position = ''; win.style.top = ''; win.style.left = ''; win.style.margin = '';
+
+    document.getElementById('todo-modal').classList.add('show');
+}
+
+function closeTodoModal() {
+    document.getElementById('todo-modal').classList.remove('show');
+}
+
+function saveTodo() {
+    const text = document.getElementById('modal-todo-text').value;
+    const desc = document.getElementById('modal-todo-desc').value;
+    const date = document.getElementById('modal-todo-date').value;
+    const priority = document.getElementById('modal-todo-priority').value;
+
+    if(!text || !date) return alert("Task name and date are required!");
+
+    todos.push({ id: Date.now(), text, desc, date, priority, done: false });
+    saveData();
+    closeTodoModal();
+    renderTodos();
+}
+
+function toggleTodo(id) {
+    const todo = todos.find(t => t.id === id);
+    if(todo) {
+        todo.done = !todo.done;
+        saveData();
+        renderTodos();
+    }
+}
+
+function deleteTodo(id) {
+    if(confirm("Delete this task?")) {
+        todos = todos.filter(t => t.id !== id);
+        saveData();
+        renderTodos();
+    }
+}
+
+/* =========================================
+   4. FOLDER LOGIC
+   ========================================= */
 function createFolder() {
     const name = prompt("Enter folder name:");
     if (name) {
@@ -35,17 +168,18 @@ function createFolder() {
 function selectFolder(folderId) {
     currentFolderId = folderId;
     
-    // Update visuals
+    // Visual update
     document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
     if(folderId === 'all') {
         document.getElementById('folder-all').classList.add('active');
         document.getElementById('current-folder-title').textContent = "All Notes";
     } else {
         const folder = folders.find(f => f.id === folderId);
-        document.getElementById(`folder-${folderId}`)?.classList.add('active');
-        document.getElementById('current-folder-title').textContent = folder ? folder.name : "Unknown Folder";
+        if(folder) {
+            document.getElementById(`folder-${folderId}`).classList.add('active');
+            document.getElementById('current-folder-title').textContent = folder.name;
+        }
     }
-    
     renderNotes();
 }
 
@@ -56,46 +190,75 @@ function renderFolders() {
              id="folder-${f.id}" 
              onclick="selectFolder('${f.id}')">
             <span>📁 ${f.name}</span>
-            ${f.id !== 'general' ? `<span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="font-size:0.8rem; opacity:0.5; hover:opacity:1;">✕</span>` : ''}
+            ${f.id !== 'general' ? `<span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="cursor:pointer; opacity:0.6;">✕</span>` : ''}
         </div>
     `).join('');
     
-    // Also update the dropdown in the modal
+    // Update Dropdown in Modal
     const select = document.getElementById('note-folder-select');
-    select.innerHTML = folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+    if(select) {
+        select.innerHTML = folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+    }
 }
 
 function deleteFolder(id) {
-    if(confirm("Delete this folder and all its notes?")) {
+    if(confirm("Delete this folder? Notes inside will be deleted too.")) {
         folders = folders.filter(f => f.id !== id);
-        notes = notes.filter(n => n.folderId !== id); // Delete notes in that folder
+        notes = notes.filter(n => n.folderId !== id); // Cascading delete
         saveData();
-        selectFolder('all'); // Go back to all
+        selectFolder('all');
         renderFolders();
     }
 }
 
-/* --- NOTE LOGIC --- */
+/* =========================================
+   5. NOTE LOGIC (Rich Media & Folders)
+   ========================================= */
+function renderNotes() {
+    const search = document.getElementById('note-search').value.toLowerCase();
+    const grid = document.getElementById('notes-grid');
+    
+    // Filter by Folder AND Search
+    const filtered = notes.filter(n => {
+        const matchesSearch = n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search);
+        const matchesFolder = (currentFolderId === 'all') || (n.folderId === currentFolderId);
+        return matchesSearch && matchesFolder;
+    });
+    
+    grid.innerHTML = filtered.map(n => `
+        <div class="card note-card" onclick="openNoteModal(${n.id})">
+            ${n.image ? `<img src="${n.image}">` : ''}
+            <h3>${n.title}</h3>
+            <div class="note-content">${n.content.substring(0, 100)}${n.content.length > 100 ? '...' : ''}</div>
+            <div style="margin-top: auto; padding-top: 10px; font-size: 0.8rem; color: var(--primary);">
+                ${n.tags.map(t=>`#${t}`).join(' ')}
+            </div>
+            <button onclick="event.stopPropagation(); deleteNote(${n.id})" style="position: absolute; top: 10px; right: 10px; background: white; border:none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; color: var(--danger); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✕</button>
+        </div>
+    `).join('') || `<div style="grid-column:1/-1; text-align:center; color: var(--text-secondary); padding:20px;">No notes found.</div>`;
+}
+
 function openNoteModal(id=null) {
     editingNoteId = id;
     currentNoteImage = null;
     
-    // Reset Modal Styles
+    // Reset Modal
     const win = document.getElementById('note-window');
     win.style.position = ''; win.style.top = ''; win.style.left = ''; win.style.margin = '';
     document.getElementById('note-modal').classList.add('show');
     
-    renderFolders(); // Ensure dropdown is up to date
+    renderFolders(); // Ensure dropdown has latest folders
 
     const previewContainer = document.getElementById('image-preview-container');
     const previewImg = document.getElementById('image-preview');
 
     if(id) {
+        // Edit Existing
         const n = notes.find(x => x.id === id);
         document.getElementById('note-title').value = n.title;
         document.getElementById('note-content').value = n.content;
         document.getElementById('note-tags').value = n.tags.join(', ');
-        document.getElementById('note-folder-select').value = n.folderId || 'general'; // Set folder
+        document.getElementById('note-folder-select').value = n.folderId || 'general';
         
         if(n.image) {
             currentNoteImage = n.image;
@@ -105,27 +268,31 @@ function openNoteModal(id=null) {
             previewContainer.classList.add('hidden');
         }
     } else {
-        // New Note
+        // Create New
         document.getElementById('note-title').value = '';
         document.getElementById('note-content').value = '';
         document.getElementById('note-tags').value = '';
-        // If we are currently viewing a specific folder, default to that folder
+        // Default to current folder (or General if in "All")
         document.getElementById('note-folder-select').value = (currentFolderId === 'all') ? 'general' : currentFolderId;
         previewContainer.classList.add('hidden');
     }
+}
+
+function closeNoteModal() {
+    document.getElementById('note-modal').classList.remove('show');
 }
 
 function saveNote() {
     const title = document.getElementById('note-title').value;
     const content = document.getElementById('note-content').value;
     const tags = document.getElementById('note-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
-    const folderId = document.getElementById('note-folder-select').value;
+    const folderId = document.getElementById('note-folder-select').value; // Get selected folder
     
     if(!title) return alert("Note needs a title!");
     
     const noteObj = {
         id: editingNoteId || Date.now(),
-        title, content, tags, folderId, // Saved with Folder ID
+        title, content, tags, folderId,
         image: currentNoteImage,
         date: new Date().toISOString()
     };
@@ -139,271 +306,21 @@ function saveNote() {
     saveData(); closeNoteModal(); renderNotes();
 }
 
-function renderNotes() {
-    const search = document.getElementById('note-search').value.toLowerCase();
-    const grid = document.getElementById('notes-grid');
-    
-    // Filter by Search AND by Current Folder
-    const filtered = notes.filter(n => {
-        const matchesSearch = n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search);
-        const matchesFolder = (currentFolderId === 'all') || (n.folderId === currentFolderId);
-        return matchesSearch && matchesFolder;
-    });
-    
-    grid.innerHTML = filtered.map(n => `
-        <div class="card note-card" onclick="openNoteModal(${n.id})">
-            ${n.image ? `<img src="${n.image}">` : ''}
-            <h3>${n.title}</h3>
-            <div class="note-content">${n.content.substring(0, 100)}${n.content.length > 100 ? '...' : ''}</div>
-            <div style="margin-top: auto; padding-top: 10px; font-size: 0.8rem; color: var(--primary); display:flex; justify-content:space-between; align-items:center;">
-                <span>${n.tags.map(t=>`#${t}`).join(' ')}</span>
-            </div>
-            <button onclick="event.stopPropagation(); deleteNote(${n.id})" style="position: absolute; top: 10px; right: 10px; background: white; border:none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; color: var(--danger); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✕</button>
-        </div>
-    `).join('') || `<div style="grid-column:1/-1; text-align:center; color: var(--text-secondary); padding: 20px;">No notes found in this folder.</div>`;
-}
-
-// Call this on load to show folders
-renderFolders();
-
-let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
-let editingNoteId = null;
-let currentNoteImage = null;
-
-// --- INITIALIZATION ---
-// Apply draggable logic to our windows
-makeElementDraggable(document.getElementById("todo-window"), document.getElementById("todo-header"));
-makeElementDraggable(document.getElementById("note-window"), document.getElementById("note-header"));
-
-function saveData() {
-    try {
-        localStorage.setItem('todos', JSON.stringify(todos));
-        localStorage.setItem('notes', JSON.stringify(notes));
-        localStorage.setItem('pomodoros', pomodoros);
-        updateStats();
-    } catch (e) { alert("Storage full! Please delete some data."); }
-}
-
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
-
-function showPage(pageId) {
-    // AUTO-CLOSE FEATURE: Close any open windows when switching pages
-    closeTodoModal();
-    closeNoteModal();
-
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    if(event) event.currentTarget.classList.add('active');
-    
-    if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
-}
-
-function updateStats() {
-    document.getElementById('stat-notes').textContent = notes.length;
-    document.getElementById('stat-todos').textContent = todos.filter(t => !t.completed).length;
-    document.getElementById('stat-pomodoros').textContent = pomodoros;
-
-    const upcoming = todos.filter(t => !t.completed && t.dueDate).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 3);
-    const container = document.getElementById('upcoming-tasks');
-    
-    if(upcoming.length === 0) {
-        container.innerHTML = `<div class="card" style="text-align:center; color: var(--text-secondary); padding: 30px;">🎉 No urgent tasks!</div>`;
-    } else {
-        container.innerHTML = upcoming.map(t => `
-            <div class="task-card priority-${t.priority}">
-                <div style="flex:1">
-                    <div style="font-weight:600">${t.text}</div>
-                    <div style="font-size:0.8rem; opacity:0.7;">📅 ${new Date(t.dueDate).toLocaleDateString()}</div>
-                </div>
-            </div>
-        `).join('');
+function deleteNote(id) {
+    if(confirm("Delete note?")) {
+        notes = notes.filter(n => n.id !== id);
+        saveData();
+        renderNotes();
     }
 }
 
-/* --- DRAG LOGIC --- */
-function makeElementDraggable(element, handle) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
-    handle.onmousedown = dragMouseDown;
-
-    function dragMouseDown(e) {
-        e.preventDefault();
-        // Get the mouse cursor position at startup:
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        document.onmouseup = closeDragElement;
-        // Call a function whenever the cursor moves:
-        document.onmousemove = elementDrag;
-    }
-
-    function elementDrag(e) {
-        e.preventDefault();
-        // Calculate the new cursor position:
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        // Set the element's new position:
-        // We use transform translate instead of top/left to keep it smooth and relative to center
-        // Note: element.style.transform might contain 'scale', so we need to handle that.
-        // For simplicity in this layout, we are manipulating top/left relative to current visual position
-        
-        let currentTop = element.offsetTop;
-        let currentLeft = element.offsetLeft;
-        
-        // Since the element is centered via flexbox in the overlay, we need to switch it to absolute positioning
-        // the first time we drag it so it moves freely.
-        element.style.position = "absolute";
-        element.style.margin = "0"; // Remove auto margins
-        element.style.top = (currentTop - pos2) + "px";
-        element.style.left = (currentLeft - pos1) + "px";
-    }
-
-    function closeDragElement() {
-        // Stop moving when mouse button is released:
-        document.onmouseup = null;
-        document.onmousemove = null;
-    }
-}
-
-/* --- TIMER --- */
-let timerInterval, timeLeft = 25 * 60, isTimerRunning = false;
-function setTimerMode(minutes) {
-    clearInterval(timerInterval); isTimerRunning = false; timeLeft = minutes * 60;
-    updateTimerDisplay();
-    document.getElementById('start-btn').textContent = "Start Focus";
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    if(event) event.target.classList.add('active');
-}
-function updateTimerDisplay() {
-    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-    const s = (timeLeft % 60).toString().padStart(2, '0');
-    document.getElementById('timer-display').textContent = `${m}:${s}`;
-    document.title = `${m}:${s} - Focus`;
-}
-function startTimer() {
-    if (isTimerRunning) { clearInterval(timerInterval); isTimerRunning = false; document.getElementById('start-btn').textContent = "Resume"; }
-    else {
-        isTimerRunning = true; document.getElementById('start-btn').textContent = "Pause";
-        timerInterval = setInterval(() => {
-            timeLeft--; updateTimerDisplay();
-            if (timeLeft <= 0) { clearInterval(timerInterval); alert("Session Complete!"); pomodoros++; saveData(); resetTimer(); }
-        }, 1000);
-    }
-}
-function resetTimer() { clearInterval(timerInterval); isTimerRunning = false; setTimerMode(25); document.querySelector('.mode-btn').click(); }
-
-/* --- TO-DO MODAL FUNCTIONS --- */
-/* --- TO-DO MODAL FUNCTIONS --- */
-function openTodoModal() { 
-    // Clear previous values
-    ['modal-todo-text','modal-todo-desc','modal-todo-date'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('modal-todo-priority').value = 'medium';
-    
-    // --- NEW CODE: Set Date Limits (Today to +3 Months) ---
-    const dateInput = document.getElementById('modal-todo-date');
-    const today = new Date();
-    const maxDate = new Date();
-    maxDate.setMonth(maxDate.getMonth() + 3); // Add 3 months
-
-    // Format to YYYY-MM-DD for HTML input
-    dateInput.min = today.toISOString().split('T')[0];
-    dateInput.max = maxDate.toISOString().split('T')[0];
-    // ------------------------------------------------------
-
-    // Reset position for fresh look
-    const win = document.getElementById('todo-window');
-    win.style.position = ''; 
-    win.style.top = ''; 
-    win.style.left = ''; 
-    win.style.margin = '';
-
-    document.getElementById('todo-modal').classList.add('show');
-}
-function closeTodoModal() { document.getElementById('todo-modal').classList.remove('show'); }
-
-function saveTodoFromModal() {
-    const text = document.getElementById('modal-todo-text').value.trim();
-    if(!text) return alert("Please enter a task name");
-    
-    todos.push({
-        id: Date.now(),
-        text,
-        desc: document.getElementById('modal-todo-desc').value,
-        dueDate: document.getElementById('modal-todo-date').value,
-        priority: document.getElementById('modal-todo-priority').value,
-        completed: false
-    });
-    saveData(); closeTodoModal(); renderTodos();
-}
-
-function renderTodos() {
-    const list = document.getElementById('todo-list');
-    const sorted = [...todos].sort((a,b) => (a.completed - b.completed) || (a.priority === 'high' ? -1 : 1));
-    
-    list.innerHTML = sorted.map(t => `
-        <div class="task-card priority-${t.priority}" style="opacity: ${t.completed ? 0.5 : 1}">
-            <input type="checkbox" style="width: 20px; height: 20px; cursor:pointer;" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})">
-            <div style="flex:1">
-                <div style="text-decoration: ${t.completed ? 'line-through' : 'none'}; font-weight: 600;">${t.text}</div>
-                ${t.desc ? `<div style="font-size: 0.85rem; color: var(--text-secondary);">${t.desc}</div>` : ''}
-            </div>
-            <button class="btn-ghost" style="color: var(--danger); padding: 8px;" onclick="deleteTodo(${t.id})">✕</button>
-        </div>
-    `).join('') || `<div style="text-align:center; color: var(--text-secondary); padding: 40px;">No tasks. You're all caught up! 🌟</div>`;
-}
-
-function toggleTodo(id) { const t = todos.find(x => x.id === id); if(t) t.completed = !t.completed; saveData(); renderTodos(); }
-function deleteTodo(id) { if(confirm("Delete task?")) { todos = todos.filter(t => t.id !== id); saveData(); renderTodos(); } }
-
-/* --- NOTE MODAL FUNCTIONS --- */
-function openNoteModal(id=null) {
-    editingNoteId = id;
-    currentNoteImage = null;
-    
-    // Reset position
-    const win = document.getElementById('note-window');
-    win.style.position = ''; 
-    win.style.top = ''; 
-    win.style.left = ''; 
-    win.style.margin = '';
-
-    const modal = document.getElementById('note-modal');
-    modal.classList.add('show');
-    
-    const previewContainer = document.getElementById('image-preview-container');
-    const previewImg = document.getElementById('image-preview');
-
-    if(id) {
-        const n = notes.find(x => x.id === id);
-        document.getElementById('note-title').value = n.title;
-        document.getElementById('note-content').value = n.content;
-        document.getElementById('note-tags').value = n.tags.join(', ');
-        
-        if(n.image) {
-            currentNoteImage = n.image;
-            previewImg.src = n.image;
-            previewContainer.classList.remove('hidden');
-        } else {
-            previewContainer.classList.add('hidden');
-        }
-    } else {
-        document.getElementById('note-title').value = '';
-        document.getElementById('note-content').value = '';
-        document.getElementById('note-tags').value = '';
-        previewContainer.classList.add('hidden');
-    }
-}
-function closeNoteModal() { document.getElementById('note-modal').classList.remove('show'); }
-
+// Image Handling
 function previewImage(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             currentNoteImage = e.target.result;
-            document.getElementById('image-preview').src = e.target.result;
+            document.getElementById('image-preview').src = currentNoteImage;
             document.getElementById('image-preview-container').classList.remove('hidden');
         }
         reader.readAsDataURL(input.files[0]);
@@ -411,66 +328,125 @@ function previewImage(input) {
 }
 
 function clearImage() {
-    document.getElementById('note-image').value = '';
     currentNoteImage = null;
+    document.getElementById('note-image').value = '';
     document.getElementById('image-preview-container').classList.add('hidden');
 }
 
-function saveNote() {
-    const title = document.getElementById('note-title').value;
-    const content = document.getElementById('note-content').value;
-    const tags = document.getElementById('note-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
+/* =========================================
+   6. POMODORO TIMER
+   ========================================= */
+function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     
-    if(!title) return alert("Note needs a title!");
-    
-    const noteObj = {
-        id: editingNoteId || Date.now(),
-        title, content, tags,
-        image: currentNoteImage
-    };
+    // Find the button that was clicked (safely)
+    const buttons = document.querySelectorAll('.mode-btn');
+    if(mode === 'pomodoro') buttons[0].classList.add('active');
+    if(mode === 'short') buttons[1].classList.add('active');
+    if(mode === 'long') buttons[2].classList.add('active');
 
-    if(editingNoteId) {
-        const idx = notes.findIndex(n=>n.id===editingNoteId);
-        notes[idx] = noteObj;
-    } else {
-        notes.unshift(noteObj);
+    pauseTimer();
+    if (mode === 'pomodoro') timeLeft = 25 * 60;
+    else if (mode === 'short') timeLeft = 5 * 60;
+    else if (mode === 'long') timeLeft = 15 * 60;
+    
+    updateTimerDisplay();
+}
+
+function startTimer() {
+    if(!isRunning) {
+        isRunning = true;
+        timerInterval = setInterval(() => {
+            if(timeLeft > 0) {
+                timeLeft--;
+                updateTimerDisplay();
+            } else {
+                // Timer finished
+                pauseTimer();
+                if(currentMode === 'pomodoro') {
+                    pomodoros++;
+                    saveData();
+                    alert("Focus session complete! Take a break.");
+                } else {
+                    alert("Break over! Back to work.");
+                }
+            }
+        }, 1000);
     }
-    saveData(); closeNoteModal(); renderNotes();
 }
 
-function renderNotes() {
-    const search = document.getElementById('note-search').value.toLowerCase();
-    const grid = document.getElementById('notes-grid');
-    const filtered = notes.filter(n => n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search));
-    
-    grid.innerHTML = filtered.map(n => `
-        <div class="card note-card" onclick="openNoteModal(${n.id})">
-            ${n.image ? `<img src="${n.image}">` : ''}
-            <h3>${n.title}</h3>
-            <div class="note-content">${n.content.substring(0, 100)}${n.content.length > 100 ? '...' : ''}</div>
-            <div style="margin-top: auto; padding-top: 10px; font-size: 0.8rem; color: var(--primary);">
-                ${n.tags.map(t=>`#${t}`).join(' ')}
-            </div>
-            <button onclick="event.stopPropagation(); deleteNote(${n.id})" style="position: absolute; top: 10px; right: 10px; background: white; border:none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; color: var(--danger); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✕</button>
-        </div>
-    `).join('') || `<div style="grid-column:1/-1; text-align:center; color: var(--text-secondary); padding: 20px;">No notes yet. Create one! 📝</div>`;
+function pauseTimer() {
+    clearInterval(timerInterval);
+    isRunning = false;
 }
-function deleteNote(id) { if(confirm("Delete note?")) { notes = notes.filter(n=>n.id!==id); saveData(); renderNotes(); } }
 
+function resetTimer() {
+    pauseTimer();
+    setMode(currentMode);
+}
+
+function updateTimerDisplay() {
+    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const s = (timeLeft % 60).toString().padStart(2, '0');
+    document.getElementById('timer-time').innerText = `${m}:${s}`;
+}
+
+/* =========================================
+   7. UTILITIES (Draggable, Dark Mode)
+   ========================================= */
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
 }
-function clearAllData() { if(confirm("Reset App?")) { localStorage.clear(); location.reload(); } }
 
-if(localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-    document.getElementById('dark-mode-toggle').checked = true;
+function clearAllData() {
+    if(confirm("DANGER: This will wipe all notes and tasks. Are you sure?")) {
+        localStorage.clear();
+        location.reload();
+    }
 }
 
-window.onclick = e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('show'); }
-document.addEventListener('keydown', (e) => { if(e.key === "Escape") document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); });
+// Dragging Logic
+function dragElement(elmnt) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    // The header is the handle
+    const header = elmnt.querySelector(".draggable-handle");
+    if (header) {
+        header.onmousedown = dragMouseDown;
+    }
 
-renderTodos(); 
-renderNotes(); 
-updateStats();
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        elmnt.style.margin = 0; 
+        elmnt.style.position = "absolute";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+
+// Close modals when clicking strictly on the dark overlay
+window.onclick = function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('show');
+    }
+};
