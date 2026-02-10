@@ -1,10 +1,23 @@
 /* =========================================
    1. GLOBAL VARIABLES & INITIAL LOAD
    ========================================= */
-let todos = JSON.parse(localStorage.getItem('todos')) || [];
-let notes = JSON.parse(localStorage.getItem('notes')) || [];
-let folders = JSON.parse(localStorage.getItem('folders')) || [{id: 'general', name: 'General'}];
+// Helper to safely parse JSON without crashing
+function safeLoad(key, fallback) {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : fallback;
+    } catch (e) {
+        console.warn(`Corrupted data for ${key}, resetting.`);
+        return fallback;
+    }
+}
+
+let todos = safeLoad('todos', []);
+let notes = safeLoad('notes', []);
+let folders = safeLoad('folders', [{id: 'general', name: 'General'}]);
 let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
+
+// ... rest of the code ...
 
 // State Variables
 let editingNoteId = null;
@@ -39,13 +52,45 @@ window.onload = () => {
 /* =========================================
    2. NAVIGATION & SAVING
    ========================================= */
+/* =========================================
+   2. NAVIGATION & SAVING
+   ========================================= */
+
+// Fixed: Robust page switching that finds the active link automatically
 function showPage(pageId) {
+    // 1. Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
     
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    // 2. Show the specific page requested
+    const page = document.getElementById(pageId);
+    if (page) {
+        page.classList.add('active');
+    } else {
+        console.error(`Page "${pageId}" not found!`);
+        return;
+    }
+    
+    // 3. Update Sidebar Highlight
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        // Check if this link corresponds to the pageId
+        if (link.getAttribute('onclick').includes(`'${pageId}'`)) {
+            link.classList.add('active');
+        }
+    });
+
+    // On mobile, close sidebar after clicking
+    if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+    }
 }
+
+// Added: Missing function for the mobile menu button
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ... keep existing saveData and updateStats functions ...
 
 function saveData() {
     try {
