@@ -76,15 +76,68 @@
             <div id="todo-list" style="display: flex; flex-direction: column; gap: 15px;"></div>
         </div>
 
-        <div id="notes" class="page">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h1>My Notes</h1>
-                <button class="btn" onclick="openNoteModal()">
-                    <span style="font-size: 1.2rem; margin-right: 8px;">+</span> Create Note
-                </button>
+                <div id="notes" class="page">
+            <div class="notes-layout">
+                <div class="folder-sidebar">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="font-size: 1.5rem;">Library</h2>
+                    </div>
+                    
+                    <div class="folder-menu">
+                        <div class="folder-item active" onclick="selectFolder('all')" id="folder-all">
+                            <span>📚 All Notes</span>
+                        </div>
+                        <div id="folder-list"></div>
+                    </div>
+
+                    <button class="btn-ghost" style="width: 100%; text-align: left; margin-top: 15px;" onclick="createFolder()">
+                        <span style="margin-right: 8px;">+</span> New Folder
+                    </button>
+                </div>
+
+                <div class="notes-main">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h1 id="current-folder-title" style="margin: 0;">All Notes</h1>
+                        <button class="btn" onclick="openNoteModal()">
+                            <span style="font-size: 1.2rem; margin-right: 8px;">+</span> Create Note
+                        </button>
+                    </div>
+
+                    <input type="text" id="note-search" placeholder="🔍 Search current folder..." oninput="renderNotes()">
+                    <div class="notes-grid" id="notes-grid"></div>
+                </div>
             </div>
-            <input type="text" id="note-search" placeholder="🔍 Search your notes..." oninput="renderNotes()">
-            <div class="notes-grid" id="notes-grid"></div>
+        </div>
+
+        <div id="note-modal" class="modal-overlay">
+            <div class="modal-glass modal-large" id="note-window">
+                <div class="modal-header no-border draggable-handle" id="note-header">
+                    <input type="text" id="note-title" placeholder="Untitled Note" class="invisible-title">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="note-folder-select" class="folder-select"></select>
+                        <button class="close-icon" onclick="closeNoteModal()">✕</button>
+                    </div>
+                </div>
+                
+                <div class="modal-body scrollable">
+                    <textarea id="note-content" placeholder="Start typing your brilliance here..." class="invisible-body"></textarea>
+                    
+                    <div id="image-preview-container" class="image-preview-box hidden">
+                        <img id="image-preview" src="">
+                        <button onclick="clearImage()" class="remove-img">✕</button>
+                    </div>
+                </div>
+
+                <div class="modal-footer toolbar">
+                    <div class="tools-left">
+                            <label for="note-image" class="tool-btn" title="Add Image">
+                            📷 <input type="file" id="note-image" accept="image/*" hidden onchange="previewImage(this)">
+                        </label>
+                        <input type="text" id="note-tags" placeholder="#tag1, #tag2" class="tag-input">
+                    </div>
+                    <button class="btn-primary-wide" onclick="saveNote()">Save</button>
+                </div>
+            </div>
         </div>
 
         <div id="settings" class="page">

@@ -1,5 +1,171 @@
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
+/* --- DATA INITIALIZATION --- */
+let todos = JSON.parse(localStorage.getItem('todos')) || [];
+// Load Notes
+
 let notes = JSON.parse(localStorage.getItem('notes')) || [];
+// Load Folders (Default to 'General' if empty)
+let folders = JSON.parse(localStorage.getItem('folders')) || [{id: 'general', name: 'General'}];
+let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
+
+let editingNoteId = null;
+let currentNoteImage = null;
+let currentFolderId = 'all'; // Default view
+
+/* --- FOLDER LOGIC --- */
+function saveData() {
+    try {
+        localStorage.setItem('todos', JSON.stringify(todos));
+        localStorage.setItem('notes', JSON.stringify(notes));
+        localStorage.setItem('folders', JSON.stringify(folders)); // Save folders
+        localStorage.setItem('pomodoros', pomodoros);
+        updateStats();
+    } catch (e) { alert("Storage full!"); }
+}
+
+function createFolder() {
+    const name = prompt("Enter folder name:");
+    if (name) {
+        folders.push({ id: Date.now().toString(), name: name });
+        saveData();
+        renderFolders();
+    }
+}
+
+function selectFolder(folderId) {
+    currentFolderId = folderId;
+    
+    // Update visuals
+    document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
+    if(folderId === 'all') {
+        document.getElementById('folder-all').classList.add('active');
+        document.getElementById('current-folder-title').textContent = "All Notes";
+    } else {
+        const folder = folders.find(f => f.id === folderId);
+        document.getElementById(`folder-${folderId}`)?.classList.add('active');
+        document.getElementById('current-folder-title').textContent = folder ? folder.name : "Unknown Folder";
+    }
+    
+    renderNotes();
+}
+
+function renderFolders() {
+    const list = document.getElementById('folder-list');
+    list.innerHTML = folders.map(f => `
+        <div class="folder-item ${currentFolderId === f.id ? 'active' : ''}" 
+             id="folder-${f.id}" 
+             onclick="selectFolder('${f.id}')">
+            <span>📁 ${f.name}</span>
+            ${f.id !== 'general' ? `<span onclick="event.stopPropagation(); deleteFolder('${f.id}')" style="font-size:0.8rem; opacity:0.5; hover:opacity:1;">✕</span>` : ''}
+        </div>
+    `).join('');
+    
+    // Also update the dropdown in the modal
+    const select = document.getElementById('note-folder-select');
+    select.innerHTML = folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+}
+
+function deleteFolder(id) {
+    if(confirm("Delete this folder and all its notes?")) {
+        folders = folders.filter(f => f.id !== id);
+        notes = notes.filter(n => n.folderId !== id); // Delete notes in that folder
+        saveData();
+        selectFolder('all'); // Go back to all
+        renderFolders();
+    }
+}
+
+/* --- NOTE LOGIC --- */
+function openNoteModal(id=null) {
+    editingNoteId = id;
+    currentNoteImage = null;
+    
+    // Reset Modal Styles
+    const win = document.getElementById('note-window');
+    win.style.position = ''; win.style.top = ''; win.style.left = ''; win.style.margin = '';
+    document.getElementById('note-modal').classList.add('show');
+    
+    renderFolders(); // Ensure dropdown is up to date
+
+    const previewContainer = document.getElementById('image-preview-container');
+    const previewImg = document.getElementById('image-preview');
+
+    if(id) {
+        const n = notes.find(x => x.id === id);
+        document.getElementById('note-title').value = n.title;
+        document.getElementById('note-content').value = n.content;
+        document.getElementById('note-tags').value = n.tags.join(', ');
+        document.getElementById('note-folder-select').value = n.folderId || 'general'; // Set folder
+        
+        if(n.image) {
+            currentNoteImage = n.image;
+            previewImg.src = n.image;
+            previewContainer.classList.remove('hidden');
+        } else {
+            previewContainer.classList.add('hidden');
+        }
+    } else {
+        // New Note
+        document.getElementById('note-title').value = '';
+        document.getElementById('note-content').value = '';
+        document.getElementById('note-tags').value = '';
+        // If we are currently viewing a specific folder, default to that folder
+        document.getElementById('note-folder-select').value = (currentFolderId === 'all') ? 'general' : currentFolderId;
+        previewContainer.classList.add('hidden');
+    }
+}
+
+function saveNote() {
+    const title = document.getElementById('note-title').value;
+    const content = document.getElementById('note-content').value;
+    const tags = document.getElementById('note-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
+    const folderId = document.getElementById('note-folder-select').value;
+    
+    if(!title) return alert("Note needs a title!");
+    
+    const noteObj = {
+        id: editingNoteId || Date.now(),
+        title, content, tags, folderId, // Saved with Folder ID
+        image: currentNoteImage,
+        date: new Date().toISOString()
+    };
+
+    if(editingNoteId) {
+        const idx = notes.findIndex(n=>n.id===editingNoteId);
+        notes[idx] = noteObj;
+    } else {
+        notes.unshift(noteObj);
+    }
+    saveData(); closeNoteModal(); renderNotes();
+}
+
+function renderNotes() {
+    const search = document.getElementById('note-search').value.toLowerCase();
+    const grid = document.getElementById('notes-grid');
+    
+    // Filter by Search AND by Current Folder
+    const filtered = notes.filter(n => {
+        const matchesSearch = n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search);
+        const matchesFolder = (currentFolderId === 'all') || (n.folderId === currentFolderId);
+        return matchesSearch && matchesFolder;
+    });
+    
+    grid.innerHTML = filtered.map(n => `
+        <div class="card note-card" onclick="openNoteModal(${n.id})">
+            ${n.image ? `<img src="${n.image}">` : ''}
+            <h3>${n.title}</h3>
+            <div class="note-content">${n.content.substring(0, 100)}${n.content.length > 100 ? '...' : ''}</div>
+            <div style="margin-top: auto; padding-top: 10px; font-size: 0.8rem; color: var(--primary); display:flex; justify-content:space-between; align-items:center;">
+                <span>${n.tags.map(t=>`#${t}`).join(' ')}</span>
+            </div>
+            <button onclick="event.stopPropagation(); deleteNote(${n.id})" style="position: absolute; top: 10px; right: 10px; background: white; border:none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; color: var(--danger); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✕</button>
+        </div>
+    `).join('') || `<div style="grid-column:1/-1; text-align:center; color: var(--text-secondary); padding: 20px;">No notes found in this folder.</div>`;
+}
+
+// Call this on load to show folders
+renderFolders();
+
 let pomodoros = parseInt(localStorage.getItem('pomodoros')) || 0;
 let editingNoteId = null;
 let currentNoteImage = null;
