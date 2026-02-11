@@ -13,13 +13,13 @@
 
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <h2>StudyBot</h2>
+            <h2>✨ StudyBot</h2>
         </div>
         <nav>
             <div class="nav-link active" onclick="showPage('home')"><span>🏠</span> Dashboard</div>
             <div class="nav-link" onclick="showPage('timer')"><span>⏳</span> Focus Timer</div>
             <div class="nav-link" onclick="showPage('todo')"><span>✅</span> Tasks</div>
-            <div class="nav-link" onclick="showPage('notes')"><span>📝</span> Notes</div>
+            <div class="nav-link" onclick="showPage('notes')"><span>📝</span> Library</div>
             <div class="nav-link" onclick="showPage('flashcards')"><span>⚡</span> Flashcards</div>
             <div style="margin-top: auto; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px;">
                 <div class="nav-link" onclick="showPage('settings')"><span>⚙️</span> Settings</div>
@@ -39,49 +39,32 @@
             </div>
 
             <h3 style="margin: 30px 0 15px; font-weight: 600;">Overview</h3>
-            
-            <div class="stats-grid fade-in" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stats-grid fade-in">
                 <div class="stat-card blue">
                     <div class="stat-icon">📝</div>
-                    <div>
-                        <div class="stat-value" id="stat-note">0</div>
-                        <div class="stat-label">Total Notes</div>
-                    </div>
+                    <div><div class="stat-value" id="stat-note">0</div><div class="stat-label">Total Notes</div></div>
                 </div>
                 <div class="stat-card purple">
                     <div class="stat-icon">✅</div>
-                    <div>
-                        <div class="stat-value" id="stat-todo">0</div>
-                        <div class="stat-label">Pending Tasks</div>
-                    </div>
+                    <div><div class="stat-value" id="stat-todo">0</div><div class="stat-label">Pending Tasks</div></div>
                 </div>
                 <div class="stat-card pink">
                     <div class="stat-icon">🔥</div>
-                    <div>
-                        <div class="stat-value" id="stat-pomo">0</div>
-                        <div class="stat-label">Focus Sessions</div>
-                    </div>
+                    <div><div class="stat-value" id="stat-pomo">0</div><div class="stat-label">Focus Sessions</div></div>
                 </div>
             </div>
 
             <h3 style="margin: 30px 0 15px; font-weight: 600;">Quick Actions</h3>
             <div class="row-group">
-                <div class="card action-card" onclick="openTodoModal()">
-                    <span>+ Add New Task</span>
-                </div>
-                <div class="card action-card" onclick="openNoteModal()">
-                    <span>+ Create Note</span>
-                </div>
-                <div class="card action-card" onclick="openDeckBuilder()">
-                    <span>+ New Flashcard Deck</span>
-                </div>
+                <div class="card action-card" onclick="openTodoModal()"><span>+ Add New Task</span></div>
+                <div class="card action-card" onclick="openNoteModal()"><span>+ Create Note</span></div>
+                <div class="card action-card" onclick="openDeckBuilder()"><span>+ New Flashcard Deck</span></div>
             </div>
         </div>
 
         <div id="timer" class="page">
             <div class="timer-wrapper fade-in">
                 <h1 style="margin-bottom: 20px;">Focus Zone</h1>
-                
                 <div class="timer-circle-container">
                     <svg class="progress-ring" width="300" height="300">
                         <circle class="progress-ring__circle-bg" stroke="rgba(0,0,0,0.1)" stroke-width="12" fill="transparent" r="120" cx="150" cy="150"/>
@@ -92,14 +75,12 @@
                         <div id="timer-label" class="time-label">FOCUS</div>
                     </div>
                 </div>
-
                 <div class="timer-controls-row">
                     <div class="mode-selector">
                         <button class="mode-pill active" onclick="setMode('pomodoro')">Focus</button>
                         <button class="mode-pill" onclick="setMode('short')">Short</button>
                         <button class="mode-pill" onclick="setMode('long')">Long</button>
                     </div>
-                    
                     <div style="display: flex; gap: 15px; margin-top: 20px;">
                         <button class="btn-round-large" id="btn-start" onclick="startTimer()">▶</button>
                         <button class="btn-round-small" onclick="resetTimer()">↺</button>
@@ -212,10 +193,10 @@
             </div>
             <div class="modal-sub-header">
                 <input type="text" id="note-title" placeholder="Untitled Note" class="invisible-title">
-                <select id="note-folder-select" class="folder-select glass-input" style="width: auto;"></select>
+                <select id="note-folder-select" class="folder-select glass-input" style="width: auto; margin-left: 10px;"></select>
             </div>
             <div class="modal-body scrollable">
-                <textarea id="note-content" class="invisible-body"></textarea>
+                <textarea id="note-content" class="invisible-body" placeholder="Start typing..."></textarea>
                 <div id="image-preview-container" class="hidden">
                     <img id="image-preview" src="">
                     <button onclick="clearImage()" class="remove-img">✕</button>
